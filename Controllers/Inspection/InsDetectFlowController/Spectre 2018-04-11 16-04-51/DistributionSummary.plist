@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Spectre.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>armv7</string>
+				<string>arm64</string>
+			</array>
+			<key>bitcode</key>
+			<true/>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>57B9F184BB6EFC89DDFCC02FF875FD9F6328D595</string>
+				<key>dateExpires</key>
+				<string>2018/10/10</string>
+				<key>type</key>
+				<string>iOS Distribution</string>
+			</dict>
+			<key>embeddedBinaries</key>
+			<array>
+				<dict>
+					<key>architectures</key>
+					<array>
+						<string>armv7</string>
+						<string>arm64</string>
+					</array>
+					<key>bitcode</key>
+					<true/>
+					<key>certificate</key>
+					<dict>
+						<key>SHA1</key>
+						<string>57B9F184BB6EFC89DDFCC02FF875FD9F6328D595</string>
+						<key>dateExpires</key>
+						<string>2018/10/10</string>
+						<key>type</key>
+						<string>iOS Distribution</string>
+					</dict>
+					<key>name</key>
+					<string>Zip.framework</string>
+					<key>symbols</key>
+					<true/>
+					<key>team</key>
+					<dict>
+						<key>id</key>
+						<string>U79MRJWFL5</string>
+						<key>name</key>
+						<string>SENLAM TECHNOLOGY CO., LTD</string>
+					</dict>
+				</dict>
+				<dict>
+					<key>architectures</key>
+					<array>
+						<string>armv7</string>
+						<string>arm64</string>
+					</array>
+					<key>bitcode</key>
+					<true/>
+					<key>certificate</key>
+					<dict>
+						<key>SHA1</key>
+						<string>57B9F184BB6EFC89DDFCC02FF875FD9F6328D595</string>
+						<key>dateExpires</key>
+						<string>2018/10/10</string>
+						<key>type</key>
+						<string>iOS Distribution</string>
+					</dict>
+					<key>name</key>
+					<string>iOSDFULibrary.framework</string>
+					<key>symbols</key>
+					<true/>
+					<key>team</key>
+					<dict>
+						<key>id</key>
+						<string>U79MRJWFL5</string>
+						<key>name</key>
+						<string>SENLAM TECHNOLOGY CO., LTD</string>
+					</dict>
+				</dict>
+			</array>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>U79MRJWFL5.com.freebee.apps.mec</string>
+				<key>beta-reports-active</key>
+				<true/>
+				<key>com.apple.developer.team-identifier</key>
+				<string>U79MRJWFL5</string>
+				<key>get-task-allow</key>
+				<false/>
+				<key>keychain-access-groups</key>
+				<array>
+					<string>U79MRJWFL5.com.freebee.apps.mec</string>
+				</array>
+			</dict>
+			<key>name</key>
+			<string>Mec.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>2bb71ea0-b230-4b6a-b120-937607ede068</string>
+				<key>name</key>
+				<string>MEC_Appstore</string>
+			</dict>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>U79MRJWFL5</string>
+				<key>name</key>
+				<string>SENLAM TECHNOLOGY CO., LTD</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>
