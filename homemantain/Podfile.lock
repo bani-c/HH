@@ -1,0 +1,76 @@
+PODS:
+  - Digger (0.0.5)
+  - Dropper (2.7.6)
+  - EPSignature (1.0.6)
+  - FLAnimatedImage (1.0.17)
+  - FSCalendar (2.8.4)
+  - IQKeyboardManagerSwift (5.0.0)
+  - JGProgressHUD (2.2)
+  - MBProgressHUD (1.0.0)
+  - NXDrawKit (0.8.1)
+  - NYTPhotoViewer (1.1.0):
+    - NYTPhotoViewer/AnimatedGifSupport (= 1.1.0)
+    - NYTPhotoViewer/Core (= 1.1.0)
+  - NYTPhotoViewer/AnimatedGifSupport (1.1.0):
+    - FLAnimatedImage (~> 1.0.8)
+    - NYTPhotoViewer/Core
+  - NYTPhotoViewer/Core (1.1.0)
+  - PDFGenerator (2.1.1)
+  - RSKImageCropper (3.0.2)
+  - SQLite.swift (0.11.6):
+    - SQLite.swift/standard (= 0.11.6)
+  - SQLite.swift/standard (0.11.6)
+  - VeloxDownloader (1.6)
+
+DEPENDENCIES:
+  - Digger
+  - Dropper
+  - EPSignature
+  - FSCalendar
+  - IQKeyboardManagerSwift
+  - IQKeyboardManagerSwift (= 5.0.0)
+  - JGProgressHUD
+  - MBProgressHUD (~> 1.0.0)
+  - NXDrawKit
+  - NYTPhotoViewer (~> 1.1.0)
+  - PDFGenerator (~> 2.1)
+  - RSKImageCropper
+  - SQLite.swift (~> 0.11.4)
+  - VeloxDownloader (~> 1.6)
+
+SPEC REPOS:
+  trunk:
+    - Digger
+    - Dropper
+    - EPSignature
+    - FLAnimatedImage
+    - FSCalendar
+    - IQKeyboardManagerSwift
+    - JGProgressHUD
+    - MBProgressHUD
+    - NXDrawKit
+    - NYTPhotoViewer
+    - PDFGenerator
+    - RSKImageCropper
+    - SQLite.swift
+    - VeloxDownloader
+
+SPEC CHECKSUMS:
+  Digger: c474bde76a91e0a36f12101c5dfe7e86774b15d3
+  Dropper: 52a020beb6fef2e4b1d55447f17099e5776954ef
+  EPSignature: 3fa3b520c80717b98019723faa60a41794b03fbc
+  FLAnimatedImage: bbf914596368867157cc71b38a8ec834b3eeb32b
+  FSCalendar: 2d1d0d9398f12d439f55c1fe0f01525b151b8260
+  IQKeyboardManagerSwift: 3f340202ebe1a7076279b9b9b3c817243ddb3aab
+  JGProgressHUD: d83d7a981b85d11205e19ff8ad5bb9c40571c847
+  MBProgressHUD: 4890f671c94e8a0f3cf959aa731e9de2f036d71a
+  NXDrawKit: 699e2862ae7c11a717e91dca37c11868a28c97b6
+  NYTPhotoViewer: e80e8767f3780d2df37c6f72cbab15d6c7232911
+  PDFGenerator: db0b679a1bcae76adf79667708e267c0964645a2
+  RSKImageCropper: 1ac71e9a82e3f41eea3eedfff8eacb0d3821c9ec
+  SQLite.swift: 46d890be8601964454bd3392527f863d1b802d45
+  VeloxDownloader: af352622cdc059830d94ca3ea013aaa3380db14d
+
+PODFILE CHECKSUM: bd72c8fb2d15b24e587b66b594aedbef1ec793f5
+
+COCOAPODS: 1.16.2

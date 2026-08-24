@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ChecklistTitleView" customModule="Home_Maintenance" customModuleProvider="target"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT" customClass="ChecklistTitleView" customModule="Home_Maintenance" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="768" height="60"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3oG-WM-aka" customClass="ChecklistTitleView" customModule="Home_Maintenance" customModuleProvider="target">
+                    <rect key="frame" x="0.0" y="0.0" width="768" height="60"/>
+                    <subviews>
+                        <button hidden="YES" opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wA6-yn-Pys">
+                            <rect key="frame" x="708" y="0.0" width="60" height="60"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="60" id="50V-aV-jUM"/>
+                                <constraint firstAttribute="width" secondItem="wA6-yn-Pys" secondAttribute="height" multiplier="1:1" id="oir-A5-GaG"/>
+                            </constraints>
+                            <state key="normal" image="arrow_w"/>
+                        </button>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jFr-2r-JiD">
+                            <rect key="frame" x="349" y="12.5" width="71" height="36"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                            <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                    </subviews>
+                    <color key="backgroundColor" red="0.56470588235294117" green="0.12941176470588234" blue="0.14901960784313725" alpha="1" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="bottom" secondItem="wA6-yn-Pys" secondAttribute="bottom" id="5iI-dp-4ky"/>
+                        <constraint firstItem="jFr-2r-JiD" firstAttribute="centerY" secondItem="3oG-WM-aka" secondAttribute="centerY" id="Mct-Zm-IHx"/>
+                        <constraint firstItem="wA6-yn-Pys" firstAttribute="top" secondItem="3oG-WM-aka" secondAttribute="top" id="QMc-E9-zjv"/>
+                        <constraint firstAttribute="trailing" secondItem="wA6-yn-Pys" secondAttribute="trailing" id="X2l-Ei-EfA"/>
+                        <constraint firstItem="jFr-2r-JiD" firstAttribute="centerX" secondItem="3oG-WM-aka" secondAttribute="centerX" id="x31-c1-qEB"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="3oG-WM-aka" secondAttribute="trailing" id="Jgf-dc-hd3"/>
+                <constraint firstAttribute="bottom" secondItem="3oG-WM-aka" secondAttribute="bottom" id="Neb-iE-kga"/>
+                <constraint firstItem="3oG-WM-aka" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="dDB-gp-1Jx"/>
+                <constraint firstItem="3oG-WM-aka" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" id="qqx-Sb-xIc"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <connections>
+                <outlet property="btnToggle" destination="wA6-yn-Pys" id="CHF-QZ-C9A"/>
+                <outlet property="lblTitle" destination="jFr-2r-JiD" id="C0B-mU-Ou3"/>
+            </connections>
+            <point key="canvasLocation" x="-1041" y="-37"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="arrow_w" width="21" height="21"/>
+    </resources>
+</document>

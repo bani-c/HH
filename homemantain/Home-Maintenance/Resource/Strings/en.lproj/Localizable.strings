@@ -1,0 +1,27 @@
+/* 
+  Localizable.strings
+  Home-Maintenance
+
+  Created by Bani on 29/09/2017.
+  Copyright © 2017 Ultron mobile. All rights reserved.
+*/
+"login_error" = "登入失敗，請檢查帳號密碼是否正確";
+"choose_character_project_again" = "請重新選擇角色及專案";
+"save_send_result" = "確認儲存本次驗屋結果";
+"floor" = "樓";
+"fixed" = "已修復";
+"no_fix" = "未修復";
+"fixed_before" = "修復前";
+"fixed_after" = "修復後";
+"missing_count" = "缺失數";
+"done" = "確定";
+"ip_error" = "請輸入正確ip";
+"mis_password_error" = "請輸入 MIS 密碼";
+
+
+"InsMenu_Sync" = "上傳資料";
+"InsMenu_News" = "最新消息";
+"InsMenu_Booking" = "預約驗屋";
+"InsMenu_Case" = "驗屋案件";
+"InsMenu_Record" = "驗屋紀錄";
+"InsMenu_Logout" = "登出";

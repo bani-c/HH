@@ -1,0 +1,6 @@
+framework module Pods_Home_Maintenance {
+  umbrella header "Pods-Home-Maintenance-umbrella.h"
+
+  export *
+  module * { export * }
+}
