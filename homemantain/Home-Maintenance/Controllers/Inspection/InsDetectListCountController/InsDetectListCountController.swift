@@ -107,6 +107,8 @@ class InsDetectListCountController: UIViewController, UITableViewDelegate, UITab
             for i in 0...targetPlaceData.count - 1 {
                 let tmpPlaceItem = InsPlaceItem()
                 let placeItem = targetPlaceData[i]
+                tmpPlaceItem.areaName = placeItem.areaName
+                tmpPlaceItem.placeName = placeItem.placeName
                 tmpPlaceItem.name = placeItem.name
                 for insItem in placeItem.items {
                     if insItem.check {
@@ -351,5 +353,4 @@ class InsDetectListCountController: UIViewController, UITableViewDelegate, UITab
  */
     
 }
-
 

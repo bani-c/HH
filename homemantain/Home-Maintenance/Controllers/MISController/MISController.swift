@@ -360,6 +360,9 @@ class MISController: UIViewController{
             print("Failed to delete existing file:\n\((error as NSError).description)")
         }
         self.hud.dismiss(animated: false)
+        if self.dlPicArr.isEmpty {
+            return
+        }
         let alert = UIAlertController(title: "提醒", message: "無法下載圖片\n" + self.dlPicArr[self.dlIndex].fileUrl, preferredStyle: UIAlertControllerStyle.alert)
         
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.destructive, handler: { action in
@@ -371,6 +374,9 @@ class MISController: UIViewController{
     @objc func timerStopBasic() {
        
         self.hud.dismiss(animated: false)
+        if self.dlPicArr.isEmpty {
+            return
+        }
         let alert = UIAlertController(title: "提醒", message: "無法下載資料\n" + self.dlPicArr[self.dlIndex].fileUrl, preferredStyle: UIAlertControllerStyle.alert)
         
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.destructive, handler: { action in

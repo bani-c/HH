@@ -18,7 +18,7 @@ class PDFGenerator:NSObject {
             placeData.items = [InsItem()]
             self.placeData = [placeData]
         } else {
-            self.placeData = placeData
+            self.placeData = InspectionPrintOrder.sorted(placeData)
         }
         let pdfDataGroup = generatePDFData()
         do {

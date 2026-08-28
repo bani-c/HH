@@ -12,7 +12,7 @@ class PDFCountGenerator:NSObject {
     var placeData:[InsPlaceItem] = []
     
     func createPDF(_ placeData:[InsPlaceItem]) -> URL {
-        self.placeData = placeData
+        self.placeData = InspectionPrintOrder.sorted(placeData)
         let pdfDataGroup = generatePDFData()
         do {
             

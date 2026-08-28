@@ -168,6 +168,7 @@ public class VeloxDownloadManager : NSObject,URLSessionDelegate,URLSessionDownlo
         if(VeloxCacheManagement.fileDownloadCompletedForURL(url: url))
         {
             print("file is finished downloading")
+            completionClosure(true)
         }
         else if(!(VeloxCacheManagement.fileExistForURL(url: url, directory: directoryName)))
         {

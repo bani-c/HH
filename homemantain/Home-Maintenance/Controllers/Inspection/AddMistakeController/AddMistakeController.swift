@@ -20,6 +20,7 @@ class AddMistakeController: UIViewController, UIPickerViewDelegate, UIPickerView
 	public var caseName: String!
 	public var projectName: String!
     public var from = 0
+    public var initialAreaId: String?
 	let data0 = NSMutableArray.init()
 	let data1 = NSMutableArray.init()
 	var projectIndex:Int = 0
@@ -63,6 +64,10 @@ class AddMistakeController: UIViewController, UIPickerViewDelegate, UIPickerView
 	// MARK: Custom Functions
 	func initLayaout() {
 		initData()
+		if let initialAreaId = initialAreaId,
+			let initialAreaIndex = areaData.index(where: { $0.idx == initialAreaId }) {
+			areaIndex = initialAreaIndex
+		}
         //init back button
         let btnBack = NaviTool.initBtnBack()
         btnBack.addTarget(self, action: #selector(btnBackPressed(sender:)), for: .touchUpInside)
@@ -175,6 +180,10 @@ class AddMistakeController: UIViewController, UIPickerViewDelegate, UIPickerView
         pickerViewArea = initTextField(textField: tfArea, tag: 0)
 		pickerViewPlace = initTextField(textField: tfCat, tag: 1)
 		pickerViewDes = initTextField(textField: tfDes, tag: 2)
+        pickerViewArea.selectRow(areaIndex, inComponent: 0, animated: false)
+        if placeIndex >= 0 {
+            pickerViewPlace.selectRow(placeIndex, inComponent: 0, animated: false)
+        }
 	}
 	
 	func initTextField(textField: UITextField, tag: Int) -> UIPickerView {
@@ -397,5 +406,4 @@ class AddMistakeController: UIViewController, UIPickerViewDelegate, UIPickerView
    
     
 }
-
 

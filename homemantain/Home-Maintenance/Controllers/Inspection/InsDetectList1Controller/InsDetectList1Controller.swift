@@ -57,7 +57,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
             tableViewArea.reloadData()
             tableViewItem.reloadData()
         }
-		
+
         let longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longPress(longPressGestureRecognizer:)))
         self.tableViewItem.addGestureRecognizer(longPressRecognizer)
 		
@@ -1041,6 +1041,9 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
     @IBAction func clickAddMistake(_ sender: Any) {
         let addMistakeController = AddMistakeController()
         addMistakeController.from = 1
+        if dataArea.indices.contains(areaIndex) {
+            addMistakeController.initialAreaId = dataArea[areaIndex].idx
+        }
         self.navigationController?.pushViewController(addMistakeController, animated: true)
     }
     
