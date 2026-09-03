@@ -547,7 +547,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
                         print(insItem.placeId)
                         for dataImgName in try db.prepare(queryImg) {
                             print("name: \(dataImgName[FileName]!)")
-                            insItem.picUrl = dataImgName[FileName]!
+                            if insItem.picUrls.count < 2 { insItem.picUrls.append(dataImgName[FileName]!) }
                         }
                         
                         insPlaceItem.items.append(insItem)

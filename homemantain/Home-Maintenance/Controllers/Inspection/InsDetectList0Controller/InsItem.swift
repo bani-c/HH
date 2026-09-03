@@ -19,7 +19,21 @@ class InsItem {
 	var inspItemId:String = ""
 	var check:Bool = false
 	var result:Int = -1
-	var picUrl:String = ""
+	// A defect may have up to two before-repair photos. Keep picUrl as a
+	// compatibility facade for older screens that still display the first one.
+    var picUrls:[String] = []
+    var picUrl:String {
+        get { return picUrls.first ?? "" }
+        set {
+            if newValue.isEmpty {
+                picUrls.removeAll()
+            } else if picUrls.isEmpty {
+                picUrls = [newValue]
+            } else {
+                picUrls[0] = newValue
+            }
+        }
+    }
 	var picUrlFixed:String = ""
 	var comment:String = ""
 	var desId:String = ""

@@ -806,7 +806,7 @@ func initFlowDataReinspectionAll(_ opId:String) {
                     let queryImg = InspCheckFlowUploadFile.select(FileName, FileUrl).filter(CheckFlowItemId == opId && AreaId == insAreaItem.idx && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor && ChkNo == targetChkNo && ChkInspIdx == insItem.fkIdx && FileType == "B").order(Sorting.asc)
                     for dataImgName in try db.prepare(queryImg) {
                         print("name: \(dataImgName[FileName]!)")
-                        insItem.picUrl = dataImgName[FileName]!
+                        if insItem.picUrls.count < 2 { insItem.picUrls.append(dataImgName[FileName]!) }
                     }
                     insAreaItem.items.append(insItem)
                 }

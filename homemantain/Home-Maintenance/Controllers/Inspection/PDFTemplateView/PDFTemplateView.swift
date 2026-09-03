@@ -49,6 +49,15 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
         lblPageNumber.text = String(format: "第 %d / %d 頁", pageNumber, totalPages)
         tableView.register(UINib(nibName: "PDFHeaderCell", bundle: nil), forCellReuseIdentifier: "PDFHeaderCell")
         tableView.register(UINib(nibName: "PDFErrorCell", bundle: nil), forCellReuseIdentifier: "PDFErrorCell")
+
+        // iOS 15 adds extra padding above the first section header of a plain
+        // table view.  That padding becomes a large blank strip in the PDF.
+        if #available(iOS 15.0, *) {
+            tableView.sectionHeaderTopPadding = 0
+        }
+        tableView.sectionHeaderHeight = 30
+        tableView.estimatedSectionHeaderHeight = 0
+        tableView.reloadData()
         
     }
     
@@ -231,4 +240,3 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
 	
     
 }
-

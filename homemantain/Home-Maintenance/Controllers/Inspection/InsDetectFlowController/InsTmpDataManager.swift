@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 import SQLite
 import JGProgressHUD
 import VeloxDownloader
@@ -518,11 +519,11 @@ class InsTmpDataManager {
                             }
                             
                             
-                            if item.picUrl.count > 0 {
+                            for photoName in item.picUrls.prefix(2) {
                                 let insertImg = InspCheckFlowUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                                ChkNo <- InsTargetData.sharedInstance().inspNo, CheckFlowType <- String(i),
                                                                                CheckFlowItemId <- flowId, AreaId <- item.areaId,
-                                                                               ChkInspIdx <- item.fkIdx, FileType <- "B", FileName <- item.picUrl , IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                               ChkInspIdx <- item.fkIdx, FileType <- "B", FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -563,11 +564,11 @@ class InsTmpDataManager {
                             
                             try dbUpload.run(insert)
                             try db.run(insert)
-                            if item.picUrl.count > 0 {
+                            for photoName in item.picUrls.prefix(2) {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, ProjInspIdx <- item.fkIdx, InspPlaceId <- item.placeId,
-                                                                      FileType <- "B", FileName <- item.picUrl, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString, SeqNo <- item.seqNo)
+                                                                      FileType <- "B", FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString, SeqNo <- item.seqNo)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -580,12 +581,12 @@ class InsTmpDataManager {
                             try dbUpload.run(insert)
                             try db.run(insert)
                             
-                            if item.picUrl.count > 0 {
+                            for photoName in item.picUrls.prefix(2) {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, InspPlaceId <- item.placeId,
                                                                       ProjInspIdx <- "", SeqNo <- String(i), FileType <- "B",
-                                                                      FileName <- item.picUrl, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                      FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -617,12 +618,12 @@ class InsTmpDataManager {
                             try dbUpload.run(insert)
                             try db.run(insert)
                             
-                            if item.picUrl.count > 0 {
+                            for photoName in item.picUrls.prefix(2) {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, InspPlaceId <- item.placeId,
                                                                       ProjInspIdx <- "", SeqNo <- String(i), FileType <- "B",
-                                                                      FileName <- item.picUrl, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                      FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -821,8 +822,15 @@ class InsTmpDataManager {
         let request = NSMutableURLRequest(url:myUrl!)
         request.httpMethod = "POST"
         let boundary = generateBoundaryString()
+        let deviceName = UIDevice.current.name
+        let uploadId = UUID().uuidString
+        let encodedDeviceName = deviceName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "iPad"
+        let encodedOriginalFileName = fileName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileName
         
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue(encodedDeviceName, forHTTPHeaderField: "X-Device-Name")
+        request.setValue(uploadId, forHTTPHeaderField: "X-Upload-ID")
+        request.setValue(encodedOriginalFileName, forHTTPHeaderField: "X-Original-Filename")
         let param:[String:String] = [:]
         
         let fileManager = FileManager.default

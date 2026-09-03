@@ -26,13 +26,18 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
     public var desEnable = true
     public var targetInsItem:InsItem!
     public var type = 0
-    
+
 	let data0 = NSMutableArray.init()
 	let data1 = NSMutableArray.init()
 	var projectIndex:Int = 0
 	var characterIndex:Int = 0
 	var buildingIndex:Int = 0
     var changePhoto = false
+    private var defectPhotos:[UIImage] = []
+    private let photoStackView = UIStackView()
+    private var photoStackBelowCameraConstraint:NSLayoutConstraint?
+    private var photoStackAtCameraTopConstraint:NSLayoutConstraint?
+    private var photoStackHeightConstraint:NSLayoutConstraint?
 	
     @IBOutlet weak var btnFinish: UIButton!
     @IBOutlet weak var ivPhoto: UIImageView!
@@ -88,6 +93,7 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
 		
 		self.tvComment.layer.borderColor = UIColor.gray.cgColor
 		self.tvComment.layer.borderWidth = 1
+        setupPhotoThumbnails()
         
         if targetInsItem.amount != "" && targetInsItem.amount != "0" {
             vwAmount.isHidden = false
@@ -182,16 +188,18 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
                 }
                 index += 1
             }
-            if targetInsItem.picUrl.count != 0 {
+            for fileName in targetInsItem.picUrls.prefix(2) {
                 let fileManager = FileManager.default
                 let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
-                let fileURL = documentDirectory.appendingPathComponent(targetInsItem.picUrl)
-                print(targetInsItem.picUrl)
-                let image = try UIImage.init(data: Data.init(contentsOf: fileURL), scale:1.0)
-                self.ivPhoto.image = image
-                self.ivPhoto.isHidden = false
-                self.btnEditPhoto.isHidden = false
+                let fileURL = documentDirectory.appendingPathComponent(fileName)
+                if let image = UIImage(data: try Data(contentsOf: fileURL), scale: 1.0) {
+                    defectPhotos.append(image)
+                }
             }
+            if let image = defectPhotos.first {
+                ivPhoto.image = image
+            }
+            renderPhotoThumbnails()
         } catch {
             
         }
@@ -289,17 +297,19 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
         if targetInsItem.amount != "" && targetInsItem.amount != "0" {
             targetInsItem.detect_amount = Int(tfLessAmount.text!)!
         }
-        if self.ivPhoto.image != nil && changePhoto {
+        if changePhoto {
             do {
-                if let data = UIImagePNGRepresentation(self.ivPhoto.image!) {
-                    let fileManager = FileManager.default
-                    let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
-                    let userIdx = UserDefaults.standard.string(forKey: "UserIdx")
-                    let fileName = String.init(format: "%@_%.0f.png", userIdx!, NSDate().timeIntervalSince1970)
-                    targetInsItem.picUrl = fileName
-                    let fileURL = documentDirectory.appendingPathComponent(fileName)
-                    try data.write(to: fileURL)
+                let fileManager = FileManager.default
+                let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
+                let userIdx = UserDefaults.standard.string(forKey: "UserIdx") ?? "photo"
+                var names:[String] = []
+                for image in defectPhotos.prefix(2) {
+                    guard let data = UIImageJPEGRepresentation(image, 0.85) else { continue }
+                    let fileName = String(format: "%@_%@.jpg", userIdx, UUID().uuidString)
+                    try data.write(to: documentDirectory.appendingPathComponent(fileName))
+                    names.append(fileName)
                 }
+                targetInsItem.picUrls = names
             } catch {
                 print(error)
             }
@@ -310,53 +320,108 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
 	}
 	
 	@IBAction func btnCameraPressed(_ sender: Any) {
-        if targetInsItem.picUrl.count != 0 {
-            do {
-                let fileManager = FileManager.default
-                let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
-                let fileURL = documentDirectory.appendingPathComponent(targetInsItem.picUrl)
-                print(targetInsItem.picUrl)
-                let image = try UIImage.init(data: Data.init(contentsOf: fileURL), scale:1.0)
-                var photos: [NYTPhoto] = []
-                let title = NSAttributedString(string: targetInsItem.name, attributes: [NSAttributedStringKey.foregroundColor: UIColor.white])
-                let photo = Photo.init(image:image, attributedCaptionTitle: title)
-                photos.append(photo)
-                let photosViewController = NYTPhotosViewController(photos: photos)
-                present(photosViewController, animated: true, completion: nil)
-            } catch {
-                
-            }
-            
-        } else if self.ivPhoto.image != nil {
-            var photos: [NYTPhoto] = []
-            let title = NSAttributedString(string: targetInsItem.name, attributes: [NSAttributedStringKey.foregroundColor: UIColor.white])
-            let photo = Photo.init(image:self.ivPhoto.image, attributedCaptionTitle: title)
-            photos.append(photo)
-            let photosViewController = NYTPhotosViewController(photos: photos)
-            present(photosViewController, animated: true, completion: nil)
-        } else {
-            if type != 2 {
-                let cameraController = CameraController()
-                cameraController.delegate = self
-                self.navigationController?.pushViewController(cameraController, animated: true)
-            }
-        }
+		if type != 2 && defectPhotos.count < 2 { takePhoto() }
 		
 	}
 	
 	@IBAction func btnEditPhotoPressed(_ sender: Any) {
-		let cameraController = CameraController()
-		cameraController.delegate = self
-		self.navigationController?.pushViewController(cameraController, animated: true)
+		if defectPhotos.count < 2 { takePhoto() } else { showPhotoActions() }
 	}
 	
 	func didFinishPhoto(image:UIImage) {
+        guard defectPhotos.count < 2 else { return }
         changePhoto = true
-		self.ivPhoto.image = image
-		self.ivPhoto.isHidden = false
-		self.btnEditPhoto.isHidden = false
+		defectPhotos.append(image)
+		renderPhotoThumbnails()
 	}
-    
+
+    private func takePhoto() {
+        let cameraController = CameraController()
+        cameraController.delegate = self
+        navigationController?.pushViewController(cameraController, animated: true)
+    }
+
+    private func showPhotos() {
+        let title = NSAttributedString(string: targetInsItem.name, attributes: [NSAttributedStringKey.foregroundColor: UIColor.white])
+        let photos:[NYTPhoto] = defectPhotos.map { Photo(image: $0, attributedCaptionTitle: title) }
+        present(NYTPhotosViewController(photos: photos), animated: true, completion: nil)
+    }
+
+    private func showPhotoActions() {
+        let alert = UIAlertController(title: "管理照片", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "查看 2 張照片", style: .default) { _ in self.showPhotos() })
+        alert.addAction(UIAlertAction(title: "刪除第二張照片", style: .destructive) { _ in
+            self.defectPhotos.removeLast()
+            self.changePhoto = true
+            self.ivPhoto.image = self.defectPhotos.first
+            self.btnEditPhoto.setTitle("新增第二張照片", for: .normal)
+        })
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = btnEditPhoto
+            popover.sourceRect = btnEditPhoto.bounds
+        }
+        present(alert, animated: true, completion: nil)
+    }
+
+    private func setupPhotoThumbnails() {
+        ivPhoto.isHidden = true
+        btnEditPhoto.isHidden = true
+        photoStackView.axis = .vertical
+        photoStackView.spacing = 6
+        photoStackView.distribution = .fillEqually
+        photoStackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(photoStackView)
+        photoStackBelowCameraConstraint = photoStackView.topAnchor.constraint(equalTo: btnCamera.bottomAnchor, constant: 10)
+        photoStackAtCameraTopConstraint = photoStackView.topAnchor.constraint(equalTo: btnCamera.topAnchor)
+        photoStackHeightConstraint = photoStackView.heightAnchor.constraint(equalToConstant: 100)
+        NSLayoutConstraint.activate([
+            photoStackBelowCameraConstraint!,
+            photoStackView.leadingAnchor.constraint(equalTo: btnCamera.leadingAnchor),
+            photoStackView.trailingAnchor.constraint(equalTo: btnCamera.trailingAnchor),
+            photoStackHeightConstraint!
+        ])
+    }
+
+    private func renderPhotoThumbnails() {
+        photoStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for (index, image) in defectPhotos.enumerated() {
+            let button = UIButton(type: .custom)
+            button.tag = index
+            button.setBackgroundImage(image, for: .normal)
+            button.imageView?.contentMode = .scaleAspectFill
+            button.clipsToBounds = true
+            button.layer.borderWidth = 1
+            button.layer.borderColor = UIColor.lightGray.cgColor
+            button.addTarget(self, action: #selector(photoTapped(_:)), for: .touchUpInside)
+            if type != 2 {
+                button.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(photoLongPressed(_:))))
+            }
+            photoStackView.addArrangedSubview(button)
+        }
+        let shouldHideCamera = type == 2 || defectPhotos.count == 2
+        btnCamera.isHidden = shouldHideCamera
+        photoStackBelowCameraConstraint?.isActive = !shouldHideCamera
+        photoStackAtCameraTopConstraint?.isActive = shouldHideCamera
+        photoStackHeightConstraint?.constant = defectPhotos.count == 2 ? 250 : (shouldHideCamera ? 150 : 100)
+    }
+
+    @objc private func photoTapped(_ sender: UIButton) {
+        showPhotos()
+    }
+
+    @objc private func photoLongPressed(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began, let button = gesture.view as? UIButton else { return }
+        let index = button.tag
+        let alert = UIAlertController(title: "刪除照片", message: "確定要刪除這張照片嗎？", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "刪除", style: .destructive) { _ in
+            guard index < self.defectPhotos.count else { return }
+            self.defectPhotos.remove(at: index)
+            self.changePhoto = true
+            self.renderPhotoThumbnails()
+        })
+        present(alert, animated: true, completion: nil)
+    }
+
 }
-
-
