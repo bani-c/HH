@@ -12,6 +12,7 @@ import NYTPhotoViewer
 
 class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableViewDataSource, CameraControllerDelegate, UITextFieldDelegate {
     @IBOutlet weak var btnAddMistake: UIButton!
+    @IBOutlet weak var btnSave: UIButton!
     @IBOutlet weak var ivBig: UIImageView!
     @IBOutlet weak var btnNext: UIButton!
     @IBOutlet weak var lblTitle: UILabel!
@@ -27,6 +28,23 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
 	var dataItem = NSMutableArray.init()
 	var areaIndex = 0
 	var targetItem:InsItem!
+
+    static func prepareDataForSavingIfNeeded() {
+        let dataManager = InsTmpDataManager.sharedInstance()
+        guard dataManager.dicArea["Ins_DataArea"] == nil else {
+            return
+        }
+
+        let controller = InsDetectList1Controller()
+        controller.loadViewIfNeeded()
+        if InsTargetData.sharedInstance().reinspection == "Y" {
+            controller.initDataReinspection()
+        } else if InsTargetData.sharedInstance().reinspection == "ALL" {
+            controller.initDataReinspectionAll()
+        } else {
+            controller.initData()
+        }
+    }
 	
 	// MARK: Life Circle
 	override func viewDidLoad() {
@@ -679,6 +697,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
             tableViewItem.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
             ivBig.isHidden = true
             btnAddMistake.isHidden = false
+            btnSave.isHidden = false
         } else {
             /*
             let addMistakeEditController = AddMistakeEditController()
@@ -1013,6 +1032,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
         if  ivBig.isHidden == true {
             if checkNotFinish(0) {
                 btnAddMistake.isHidden = true
+                btnSave.isHidden = true
                 ivBig.isHidden = false
             }
             return
@@ -1046,6 +1066,27 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
         }
         self.navigationController?.pushViewController(addMistakeController, animated: true)
     }
+
+    @IBAction func btnSavePressed(_ sender: Any) {
+        let alertController = UIAlertController(
+            title: "提醒",
+            message: "是否儲存驗屋紀錄？",
+            preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alertController.addAction(UIAlertAction(title: "確定", style: .default) { _ in
+            self.saveLocalData()
+            InsTmpDataManager.sharedInstance().saveData()
+            InsTmpDataManager.sharedInstance().clearData()
+
+            for viewController in self.navigationController?.viewControllers ?? [] {
+                if viewController.isKind(of: InsDashboardController.self) {
+                    self.navigationController?.popToViewController(viewController, animated: true)
+                    break
+                }
+            }
+        })
+        present(alertController, animated: true, completion: nil)
+    }
     
 	@IBAction func btnNextPressed(_ sender: Any) {
         if checkNotFinish(1) {
@@ -1075,6 +1116,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
                 if mode == 0 {
                     self.ivBig.isHidden = false
                     self.btnAddMistake.isHidden = true
+                    self.btnSave.isHidden = true
                     self.tableViewArea.reloadData()
                 } else {
                 self.navigationController?.pushViewController(InsDetectListConfirmFinalController(), animated: true)

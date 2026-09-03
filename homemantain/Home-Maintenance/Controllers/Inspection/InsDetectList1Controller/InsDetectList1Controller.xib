@@ -13,6 +13,7 @@
             <connections>
                 <outlet property="btnAddMistake" destination="8df-kI-awv" id="vve-5K-sLf"/>
                 <outlet property="btnNext" destination="HlQ-Jd-yTJ" id="WiX-6c-6lO"/>
+                <outlet property="btnSave" destination="save-btn-01" id="save-out-01"/>
                 <outlet property="ivBig" destination="OPF-wD-tec" id="X1D-X2-Ig3"/>
                 <outlet property="ivMap" destination="Dpf-zG-K5r" id="F0r-7W-gFv"/>
                 <outlet property="lblProjectName" destination="BCw-7c-JVV" id="tT2-RA-UpT"/>
@@ -51,7 +52,7 @@
                             </connections>
                         </button>
                         <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8df-kI-awv">
-                            <rect key="frame" x="796" y="24" width="100" height="36"/>
+                            <rect key="frame" x="676" y="24" width="100" height="36"/>
                             <color key="backgroundColor" white="0.05457899309" alpha="0.1001177226" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <constraints>
                                 <constraint firstAttribute="width" constant="100" id="0gR-CA-7Pg"/>
@@ -64,15 +65,31 @@
                                 <action selector="clickAddMistake:" destination="-1" eventType="touchUpInside" id="hRg-j0-N5O"/>
                             </connections>
                         </button>
+                        <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="save-btn-01">
+                            <rect key="frame" x="796" y="24" width="100" height="36"/>
+                            <color key="backgroundColor" white="0.05457899309" alpha="0.1001177226" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="save-width-01"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                            <state key="normal" title="儲存">
+                                <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </state>
+                            <connections>
+                                <action selector="btnSavePressed:" destination="-1" eventType="touchUpInside" id="save-action-01"/>
+                            </connections>
+                        </button>
                     </subviews>
                     <color key="backgroundColor" red="0.91764705882352937" green="0.76862745098039209" blue="0.53333333333333333" alpha="1" colorSpace="calibratedRGB"/>
                     <constraints>
-                        <constraint firstItem="HlQ-Jd-yTJ" firstAttribute="leading" secondItem="8df-kI-awv" secondAttribute="trailing" constant="20" id="06w-XK-Q0g"/>
+                        <constraint firstItem="save-btn-01" firstAttribute="leading" secondItem="8df-kI-awv" secondAttribute="trailing" constant="20" id="add-save-gap-01"/>
+                        <constraint firstItem="HlQ-Jd-yTJ" firstAttribute="leading" secondItem="save-btn-01" secondAttribute="trailing" constant="20" id="save-next-gap-01"/>
                         <constraint firstItem="vQ5-2K-tqZ" firstAttribute="centerY" secondItem="XEa-Hw-yBP" secondAttribute="centerY" id="6pN-pW-Jkj"/>
                         <constraint firstItem="HlQ-Jd-yTJ" firstAttribute="top" secondItem="XEa-Hw-yBP" secondAttribute="top" constant="22" id="Duz-Bf-FKU"/>
                         <constraint firstItem="vQ5-2K-tqZ" firstAttribute="centerX" secondItem="XEa-Hw-yBP" secondAttribute="centerX" id="Yn6-5k-EZX"/>
                         <constraint firstAttribute="trailing" secondItem="HlQ-Jd-yTJ" secondAttribute="trailing" constant="8" id="jaW-S3-ONN"/>
                         <constraint firstItem="8df-kI-awv" firstAttribute="centerY" secondItem="HlQ-Jd-yTJ" secondAttribute="centerY" id="oZZ-Sc-cFT"/>
+                        <constraint firstItem="save-btn-01" firstAttribute="centerY" secondItem="HlQ-Jd-yTJ" secondAttribute="centerY" id="save-center-y-01"/>
                         <constraint firstAttribute="height" constant="67" id="obH-Wz-Gyd"/>
                         <constraint firstAttribute="bottom" secondItem="HlQ-Jd-yTJ" secondAttribute="bottom" constant="5" id="yaX-yY-Jkn"/>
                     </constraints>

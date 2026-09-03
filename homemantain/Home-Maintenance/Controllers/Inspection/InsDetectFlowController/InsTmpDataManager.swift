@@ -460,10 +460,13 @@ class InsTmpDataManager {
                                                         ChkNo == InsTargetData.sharedInstance().inspNo)
                 try dbUpload.run(target.delete())
                 try db.run(target.delete())
-                let targetIns = InspDetail.filter(COP_NO == copNo && PROJM_NO == projectsNo && ELEVEL_2 == building + room && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor &&
-                    ChkNo == InsTargetData.sharedInstance().inspNo)
-                try db.run(targetIns.delete())
-                try dbUpload.run(targetIns.delete())
+                // 第一頁儲存時第二步資料尚未載入，不能把資料庫內既有的第二步項目刪除。
+                if dicArea["Ins_DataArea"] != nil {
+                    let targetIns = InspDetail.filter(COP_NO == copNo && PROJM_NO == projectsNo && ELEVEL_2 == building + room && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor &&
+                        ChkNo == InsTargetData.sharedInstance().inspNo)
+                    try db.run(targetIns.delete())
+                    try dbUpload.run(targetIns.delete())
+                }
                 
             }
             
@@ -538,7 +541,8 @@ class InsTmpDataManager {
             
             let SeqNo = Expression<String?>("SeqNo")
 			
-            var areaData = dicArea["Ins_DataArea"]!
+            // 第二步尚未開啟時不會建立 Ins_DataArea；第一步畫面仍可安全儲存。
+            var areaData = dicArea["Ins_DataArea"] ?? []
             var i = 0
             for insAreaItem in areaData {
                 for insPlaceItem in insAreaItem.places {

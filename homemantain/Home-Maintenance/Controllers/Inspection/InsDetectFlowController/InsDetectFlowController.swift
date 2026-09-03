@@ -372,6 +372,27 @@ class InsDetectFlowController: UIViewController {
 	}
 	
     //MARK: Button Action
+    @IBAction func btnSavePressed(_ sender: Any) {
+        let alertController = UIAlertController(
+            title: "提醒",
+            message: "是否儲存驗屋紀錄？",
+            preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alertController.addAction(UIAlertAction(title: "確定", style: .default) { _ in
+            InsDetectList1Controller.prepareDataForSavingIfNeeded()
+            InsTmpDataManager.sharedInstance().saveData()
+            InsTmpDataManager.sharedInstance().clearData()
+
+            for viewController in self.navigationController?.viewControllers ?? [] {
+                if viewController.isKind(of: InsDashboardController.self) {
+                    self.navigationController?.popToViewController(viewController, animated: true)
+                    break
+                }
+            }
+        })
+        present(alertController, animated: true, completion: nil)
+    }
+
     @objc func btnBackPressed(sender: UIBarButtonItem) {
         if UserDefaults.standard.object(forKey: "ISRECORD") != nil {
             self.navigationController?.popViewController(animated: true)
