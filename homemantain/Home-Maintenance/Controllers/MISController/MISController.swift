@@ -83,10 +83,7 @@ class MISController: UIViewController{
 		
 	}
 	@IBAction func clickUpdate(_ sender: Any) {
-        var NeedUpdateArr:[String] = []
-        if UserDefaults.standard.object(forKey: "NeedUpdateArr") != nil {
-            NeedUpdateArr = UserDefaults.standard.object(forKey: "NeedUpdateArr") as! [String]
-        }
+        let NeedUpdateArr = UserDefaults.standard.stringArray(forKey: "NeedUpdateArr") ?? []
         if NeedUpdateArr.count > 0 {
             UserDefaults.standard.set(0, forKey: "NeedUpdateArrIndex")
             InsTmpDataManager.sharedInstance().uploadSqlDB(NeedUpdateArr[0], view: self.view)

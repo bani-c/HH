@@ -20,8 +20,6 @@ import MobileCoreServices
 class CameraController: UIViewController
 {
 
-    // TEST ONLY: Set to false to restore the normal camera-first flow.
-    private let usePhotoLibraryForTesting = true
     private var isInitialized = false
     weak var canvasView: Canvas?
     weak var paletteView: NewPalette?
@@ -51,11 +49,7 @@ class CameraController: UIViewController
 		self.setupToolBar()
 		self.setupCanvas()
 		DispatchQueue.main.async {
-			if self.usePhotoLibraryForTesting {
-				self.showPhotoLibrary()
-			} else {
-				self.showCamera()
-			}
+			self.showCamera()
 		}
     }
     

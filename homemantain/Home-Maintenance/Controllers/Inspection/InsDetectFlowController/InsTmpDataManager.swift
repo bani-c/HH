@@ -808,6 +808,16 @@ class InsTmpDataManager {
         keepGoUpdate = true
         uploadSqlDB(fileName, view:view)
     }
+
+    private func showUploadError(_ message: String, view: UIView) {
+        DispatchQueue.main.async {
+            self.hud?.dismiss()
+            self.keepGoUpdate = false
+            let alert = UIAlertController(title: "無法上傳", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
+            view.window?.rootViewController?.present(alert, animated: true, completion: nil)
+        }
+    }
     
     func uploadSqlDB(_ fileName:String, view:UIView) {
         
@@ -818,8 +828,11 @@ class InsTmpDataManager {
             hud?.show(in: view)
             hud?.dismiss(afterDelay: 2)
         
-        let myUrl = URL.init(string: URLConstants.UploadSqlite)
-        let request = NSMutableURLRequest(url:myUrl!)
+        guard let myUrl = URL.init(string: URLConstants.UploadSqlite) else {
+            showUploadError("上傳網址設定錯誤，請聯絡系統管理員。", view: view)
+            return
+        }
+        let request = NSMutableURLRequest(url:myUrl)
         request.httpMethod = "POST"
         let boundary = generateBoundaryString()
         let deviceName = UIDevice.current.name
@@ -836,18 +849,26 @@ class InsTmpDataManager {
         let fileManager = FileManager.default
         do {
             let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
-            let fileURL = documentDirectory.appendingPathComponent("HHSub_M07_A_Upload.db")//fileName)
-            let dbData = FileManager.default.contents(atPath: fileURL.path)
-            
-            request.httpBody = createBodyWithParameters(fileName: "HHSub_M07_A_upload.db", fileType: 0, parameters: param, filePathKey: "db", imageDataKey: NSData.init(data: dbData!), boundary: boundary) as Data
+            let fileURL = documentDirectory.appendingPathComponent(fileName)
+            guard let dbData = FileManager.default.contents(atPath: fileURL.path) else {
+                showUploadError("找不到待上傳的資料檔，請先完成或儲存驗屋資料後再試。", view: view)
+                return
+            }
+
+            request.httpBody = createBodyWithParameters(fileName: fileName, fileType: 0, parameters: param, filePathKey: "db", imageDataKey: NSData(data: dbData), boundary: boundary) as Data
             
             let task = URLSession.shared.dataTask(with: request as URLRequest) {
                 data, response, error in
                 
                 
-                if error != nil {
-                    
+                if let error = error {
                     print("error=\(error)")
+                    self.showUploadError("網路連線失敗，請確認連線後再試。", view: view)
+                    return
+                }
+
+                guard let data = data else {
+                    self.showUploadError("伺服器未回傳資料，請稍後再試。", view: view)
                     return
                 }
                 
@@ -855,7 +876,7 @@ class InsTmpDataManager {
                 print("******* response = \(response)")
                 
                 // Print out reponse body
-                let responseString = NSString(data: data!, encoding: String.Encoding.utf8.rawValue)
+                let responseString = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
                 if responseString != nil {
                     print("****** response data = \(responseString!)")
                 }
@@ -866,9 +887,12 @@ class InsTmpDataManager {
                         self.hud?.dismiss()
                     }
                     do {
-                        let json = try JSONSerialization.jsonObject(with: data!, options: []) as? NSDictionary
+                        guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? NSDictionary else {
+                            self.showUploadError("伺服器回應格式錯誤，請稍後再試。", view: view)
+                            return
+                        }
                         print(json)
-                        let idStr = json?.object(forKey: "id") as? String
+                        let idStr = json.object(forKey: "id") as? String
                         
                         if idStr == nil {
                             if self.hud != nil {
@@ -877,9 +901,8 @@ class InsTmpDataManager {
                             return
                         }
                         self.fileIdStr = idStr!
-                        print(idStr)
                         
-                        let status = json?.object(forKey: "status") as? String
+                        let status = json.object(forKey: "status") as? String
                         if status == "3000" {
                             if self.hud != nil {
                                 self.hud?.dismiss()
@@ -915,8 +938,11 @@ class InsTmpDataManager {
                             return
                             
                         } else if status == "0000" {
-                            let fileInfo = json!["fileInfo"] as? NSDictionary
-                            let fileAll = fileInfo!["fileAll"] as? Int
+                            guard let fileInfo = json["fileInfo"] as? NSDictionary,
+                                  let fileAll = fileInfo["fileAll"] as? Int else {
+                                self.showUploadError("伺服器回應缺少檔案資訊，請稍後再試。", view: view)
+                                return
+                            }
                             if fileAll == 0 {
                                 if self.hud != nil {
                                     self.hud?.dismiss()
@@ -951,12 +977,14 @@ class InsTmpDataManager {
                                 }
                                 return
                             }
-                            let fileNotUploaded = fileInfo!["fileNotUploaded"] as? [NSDictionary]
+                            let fileNotUploaded = fileInfo["fileNotUploaded"] as? [NSDictionary] ?? []
                             self.upPicArr = []
                             self.upPicIndex = 0
-                            for file in fileNotUploaded! {
-                                print(file["FileName"]!)
-                                self.upPicArr.append(file["FileName"]! as! String)
+                            for file in fileNotUploaded {
+                                if let fileName = file["FileName"] as? String {
+                                    print(fileName)
+                                    self.upPicArr.append(fileName)
+                                }
                             }
                             
                             if self.hud != nil {

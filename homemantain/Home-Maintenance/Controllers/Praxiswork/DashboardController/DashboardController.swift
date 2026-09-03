@@ -288,10 +288,15 @@ class DashboardController: UIViewController, UIPickerViewDelegate, UIPickerViewD
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.default, handler: { action in
             
             
-            let projectsNo = UserDefaults.standard.string(forKey: "PROJECT_NO")
-            let building = UserDefaults.standard.string(forKey: "BUILDING")
-            
-            let fileName = String.init(format: SystemConstants.DBFileNameSubUpload, projectsNo!, building!)
+            guard let projectsNo = UserDefaults.standard.string(forKey: "PROJECT_NO"), !projectsNo.isEmpty,
+                  let building = UserDefaults.standard.string(forKey: "BUILDING"), !building.isEmpty else {
+                let errorAlert = UIAlertController(title: "無法上傳", message: "找不到目前的專案或棟別資料，請重新選擇專案後再試。", preferredStyle: .alert)
+                errorAlert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
+                self.present(errorAlert, animated: true, completion: nil)
+                return
+            }
+
+            let fileName = String.init(format: SystemConstants.DBFileNameSubUpload, projectsNo, building)
             InsTmpDataManager.sharedInstance().uploadSqlDBUpdate(fileName, view: self.view)
             
         }))
@@ -300,4 +305,3 @@ class DashboardController: UIViewController, UIPickerViewDelegate, UIPickerViewD
     }
     
 }
-
