@@ -158,16 +158,6 @@ class CameraController: UIViewController
     }
     
     fileprivate func showCamera() {
-        // TEMP TEST BEGIN: 模擬器暫時改開相簿，測試完成後移除此區塊。
-        #if targetEnvironment(simulator)
-        let temporarilyUsePhotoLibrary = true
-        if temporarilyUsePhotoLibrary {
-            self.showPhotoLibrary()
-            return
-        }
-        #endif
-        // TEMP TEST END
-
         let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
         
         switch (status) {

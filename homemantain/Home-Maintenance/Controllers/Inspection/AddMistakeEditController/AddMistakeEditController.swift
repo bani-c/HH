@@ -192,7 +192,7 @@ class AddMistakeEditController: UIViewController, CameraControllerDelegate, UIPi
                 let fileManager = FileManager.default
                 let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
                 let fileURL = documentDirectory.appendingPathComponent(fileName)
-                if let image = UIImage(data: try Data(contentsOf: fileURL), scale: 1.0) {
+                if let image = UIImage(contentsOfFile: fileURL.path) {
                     defectPhotos.append(image)
                 }
             }

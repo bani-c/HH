@@ -663,6 +663,23 @@ func initFlowDataReinspection(_ opId:String) {
                         print("name: \(dataName[InspItemName]!)")
                         insItem.name = dataName[InspItemName]!
                     }
+                    let photoTable = Table("InspCheckFlowUploadFile")
+                    let photoName = Expression<String?>("FileName")
+                    let photoType = Expression<String?>("FileType")
+                    // Prefer saved photos for this inspection, then inherit the previous inspection.
+                    for photoChkNo in [InsTargetData.sharedInstance().inspNo, targetChkNo] {
+                        let photos = photoTable.select(photoName).filter(
+                            CheckFlowItemId == opId && AreaId == insItem.areaId &&
+                            ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor &&
+                            ChkNo == photoChkNo && ChkInspIdx == insItem.fkIdx && photoType == "B" && IsValid == "Y"
+                        ).order(Expression<String?>("FileDesc").asc)
+                        for photo in try db.prepare(photos) {
+                            if let name = photo[photoName], !name.isEmpty, insItem.picUrls.count < 2 {
+                                insItem.picUrls.append(name)
+                            }
+                        }
+                        if !insItem.picUrls.isEmpty { break }
+                    }
                     insAreaItem.items.append(insItem)
                 }
             }
@@ -803,7 +820,7 @@ func initFlowDataReinspectionAll(_ opId:String) {
                     let FileType = Expression<String?>("FileType")
                     let FileName = Expression<String?>("FileName")
                     let FileUrl = Expression<String?>("FileUrl")
-                    let queryImg = InspCheckFlowUploadFile.select(FileName, FileUrl).filter(CheckFlowItemId == opId && AreaId == insAreaItem.idx && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor && ChkNo == targetChkNo && ChkInspIdx == insItem.fkIdx && FileType == "B").order(Expression<String?>("FileDesc").asc)
+                    let queryImg = InspCheckFlowUploadFile.select(FileName, FileUrl).filter(CheckFlowItemId == opId && AreaId == insAreaItem.idx && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor && ChkNo == targetChkNo && ChkInspIdx == insItem.fkIdx && FileType == "B" && IsValid == "Y").order(Expression<String?>("FileDesc").asc)
                     for dataImgName in try db.prepare(queryImg) {
                         print("name: \(dataImgName[FileName]!)")
                         if insItem.picUrls.count < 2 { insItem.picUrls.append(dataImgName[FileName]!) }
