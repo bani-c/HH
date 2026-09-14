@@ -1,423 +1,186 @@
-//
-//  NewPalette.swift
-//  Home-Maintenance
-//
-//  Created by Bani Chan on 2026/05/17.
-//  Copyright © 2026 Ultron mobile. All rights reserved.
-//
-
 import UIKit
 import NXDrawKit
 
 open class NewPalette: UIView {
     @objc open weak var delegate: PaletteDelegate?
-    private var brush: Brush = Brush()
+    private let brush = Brush()
+    private let brushWidthPreferenceKey = "InspectionPhotoBrushWidthIndex"
+    private let colors: [UIColor] = [
+        UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1),
+        UIColor.green,
+        UIColor(red: 0.2, green: 0.3, blue: 1, alpha: 1)
+    ]
+    private var colorButtons: [UIButton] = []
+    private var widthButtons: [UIButton] = []
+    private var widthDots: [UIView] = []
+    private var alphaButtons: [UIButton] = []
+    private let opacities: [CGFloat] = [1.0 / 3.0, 2.0 / 3.0, 1]
+    private var selectedAlpha = 2
+    private let row = UIStackView()
+    private var selectedColor = 0
+    private var selectedWidth = 0
 
-    // Portrait 原本尺寸，不動
-    private let buttonDiameter = UIScreen.main.bounds.width / 10.0
-    private let buttonPadding = UIScreen.main.bounds.width / 25.0
-    private let columnCount = 4
-
-    // Landscape 顏色按鈕縮小
-    private let landscapeButtonDiameter = UIScreen.main.bounds.height / 10.0
-    private let landscapeButtonPadding = UIScreen.main.bounds.height / 35.0
-    
-    private var colorButtonList = [CircleButton]()
-    private var alphaButtonList = [CircleButton]()
-    private var widthButtonList = [CircleButton]()
-    
-    private var totalHeight: CGFloat = 0.0
-    
-    private weak var colorPaletteView: UIView?
-    private weak var alphaPaletteView: UIView?
-    private weak var widthPaletteView: UIView?
-    
-    private var isLandscape: Bool {
-        return UIScreen.main.bounds.width > UIScreen.main.bounds.height
-    }
-    
-    
-    // MARK: - Initializer
     public init() {
-        super.init(frame: CGRect.zero)
+        super.init(frame: .zero)
     }
-    
+
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
-    
-    @objc open func currentBrush() -> Brush {
-        return self.brush
-    }
-    
 
-    // MARK: - Private Methods
+    @objc open func currentBrush() -> Brush { return brush }
+    @objc open func paletteHeight() -> CGFloat { return 64 }
+
     override open var intrinsicContentSize: CGSize {
-        let size = CGSize(
-            width: UIScreen.main.bounds.size.width,
-            height: self.totalHeight
-        )
-        return size
+        return CGSize(width: UIViewNoIntrinsicMetric, height: paletteHeight())
     }
-    
+
     @objc open func setup() {
-        self.backgroundColor = UIColor(
-            red: 0.22,
-            green: 0.22,
-            blue: 0.21,
-            alpha: 1.0
-        )
-        
-        self.setupColorView()
-        
-        // 直向：完全照原本，有 alpha / width
-        // 橫向：只顯示顏色
-        if !self.isLandscape {
-            self.setupAlphaView()
-            self.setupWidthView()
-        }
-        
-        self.setupDefaultValues()
-    }
-    
-    @objc open func paletteHeight() -> CGFloat {
-        return self.totalHeight
-    }
-    
-    
-    // MARK: - Color View
-    private func setupColorView() {
-        let view = UIView()
-        self.addSubview(view)
-        self.colorPaletteView = view
-        
-        var button: CircleButton?
-        
-        let diameter = self.isLandscape ? self.landscapeButtonDiameter : self.buttonDiameter
-        let padding = self.isLandscape ? self.landscapeButtonPadding : self.buttonPadding
-        
-        let colorCount: Int
-        
-        if self.isLandscape {
-            let availableWidth = UIScreen.main.bounds.width
-            let maxCount = Int((availableWidth - padding) / (diameter + padding))
-            colorCount = min(12, maxCount)
-        } else {
-            colorCount = 12
-        }
-        
-        for index in 1...colorCount {
-            let color: UIColor = self.color(index)
-            
-            button = CircleButton(
-                diameter: diameter,
-                color: color,
-                opacity: 1.0
-            )
-            
-            button?.frame = self.colorButtonRect(
-                index: index,
-                diameter: diameter,
-                padding: padding
-            )
-            
-            button?.addTarget(
-                self,
-                action: #selector(NewPalette.onClickColorPicker(_:)),
-                for: .touchUpInside
-            )
-            
-            self.colorPaletteView!.addSubview(button!)
-            self.colorButtonList.append(button!)
-        }
-        
-        self.totalHeight = button!.frame.maxY + padding
-        
-        self.colorPaletteView?.frame = CGRect(
-            x: 0,
-            y: 0,
-            width: button!.frame.maxX + padding,
-            height: self.totalHeight
-        )
-    }
-    
-    private func colorButtonRect(
-        index: NSInteger,
-        diameter: CGFloat,
-        padding: CGFloat
-    ) -> CGRect {
-        var rect: CGRect = CGRect.zero
-        let indexValue = index - 1
-        
-        if self.isLandscape {
-            // Landscape：只排一排
-            rect.origin.x = CGFloat(indexValue) * diameter + padding + CGFloat(indexValue) * padding
-            rect.origin.y = padding
-        } else {
-            // Portrait：完全照原本 4 欄排列
-            let count = self.columnCount
-            rect.origin.x = (CGFloat(indexValue % count) * diameter) + padding + (CGFloat(indexValue % count) * padding)
-            rect.origin.y = (CGFloat(indexValue / count) * diameter) + padding + (CGFloat(indexValue / count) * padding)
-        }
-        
-        rect.size = CGSize(width: diameter, height: diameter)
-        
-        return rect
-    }
-    
-    
-    // MARK: - Alpha View
-    private func setupAlphaView() {
-        let view = UIView()
-        self.addSubview(view)
-        self.alphaPaletteView = view
-        
-        var button: CircleButton?
-        
-        for index in (1...3).reversed() {
-            let opacity = self.opacity(index)
-            
-            button = CircleButton(
-                diameter: buttonDiameter,
-                color: UIColor.black,
-                opacity: opacity
-            )
-            
-            button?.frame = self.alphaButtonRect(
-                index: index,
-                diameter: self.buttonDiameter,
-                padding: self.buttonPadding
-            )
-            
-            self.alphaPaletteView!.addSubview(button!)
-            
-            button?.addTarget(
-                self,
-                action: #selector(NewPalette.onClickAlphaPicker(_:)),
-                for: .touchUpInside
-            )
-            
-            self.alphaButtonList.append(button!)
-        }
-        
-        let startX = (self.colorPaletteView?.frame)!.maxX
-        
-        self.alphaPaletteView?.frame = CGRect(
-            x: startX,
-            y: 0,
-            width: button!.frame.maxX + self.buttonPadding,
-            height: self.totalHeight
-        )
-    }
-    
-    private func alphaButtonRect(
-        index: NSInteger,
-        diameter: CGFloat,
-        padding: CGFloat
-    ) -> CGRect {
-        var rect: CGRect = CGRect.zero
-        let indexValue = index - 1
-        
-        rect.origin.x = padding
-        rect.origin.y = CGFloat(indexValue) * diameter + padding + (CGFloat(indexValue) * padding)
-        rect.size = CGSize(width: diameter, height: diameter)
-        
-        return rect
-    }
-    
-    
-    // MARK: - Width View
-    private func setupWidthView() {
-        let view = UIView()
-        self.addSubview(view)
-        self.widthPaletteView = view
-        
-        var button: CircleButton?
-        var lastY: CGFloat = 4
-        
-        for index in 1...4 {
-            let buttonDiameter = self.brushWidth(index)
-            
-            button = CircleButton(
-                diameter: buttonDiameter,
-                color: UIColor.black,
-                opacity: 1
-            )
-            
-            button?.frame = self.widthButtonRect(
-                buttonDiameter,
-                padding: self.buttonPadding,
-                lastY: lastY
-            )
-            
-            self.widthPaletteView!.addSubview(button!)
-            
-            button?.addTarget(
-                self,
-                action: #selector(NewPalette.onClickWidthPicker(_:)),
-                for: .touchUpInside
-            )
+        guard colorButtons.isEmpty else { return }
+        backgroundColor = UIColor(red: 0.22, green: 0.22, blue: 0.21, alpha: 1)
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+        row.translatesAutoresizingMaskIntoConstraints = false
+        let scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(scrollView)
+        let content = UIView()
+        content.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(content)
+        content.addSubview(row)
+        let preferredWidth = content.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        preferredWidth.priority = .defaultHigh
+        NSLayoutConstraint.activate([
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.heightAnchor.constraint(equalToConstant: paletteHeight()),
+            content.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            content.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            content.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            content.heightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.heightAnchor),
+            content.widthAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.widthAnchor),
+            content.widthAnchor.constraint(greaterThanOrEqualTo: row.widthAnchor, constant: 24),
+            preferredWidth,
+            row.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            row.topAnchor.constraint(equalTo: content.topAnchor, constant: 10)
+        ])
 
-            lastY = (button?.frame)!.maxY
-            self.widthButtonList.append(button!)
-        }
-        
-        let startX = (self.alphaPaletteView?.frame)!.maxX
-        
-        self.widthPaletteView?.frame = CGRect(
-            x: startX,
-            y: 0,
-            width: button!.frame.maxX + self.buttonPadding,
-            height: self.totalHeight
-        )
-    }
-    
-    private func widthButtonRect(
-        _ diameter: CGFloat,
-        padding: CGFloat,
-        lastY: CGFloat
-    ) -> CGRect {
-        var rect: CGRect = CGRect.zero
-        
-        rect.origin.x = padding + ((self.buttonDiameter - diameter) / 2)
-        rect.origin.y = lastY + padding
-        rect.size = CGSize(width: diameter, height: diameter)
-        
-        return rect
-    }
-
-    
-    // MARK: - Default Values
-    private func setupDefaultValues() {
-        // Red is the fifth color in the palette.
-        var button: CircleButton = self.colorButtonList[4]
-        button.isSelected = true
-        self.brush.color = button.color!
-        
-        // Portrait 才有 alpha / width
-        if !self.alphaButtonList.isEmpty {
-            button = self.alphaButtonList.first!
-            button.isSelected = true
-            self.brush.alpha = button.opacity!
-        }
-        
-        if !self.widthButtonList.isEmpty {
-            button = self.widthButtonList.first!
-            button.isSelected = true
-            self.brush.width = button.diameter!
-        }
-    }
-    
-    
-    // MARK: - Actions
-    @objc private func onClickColorPicker(_ button: CircleButton) {
-        self.brush.color = button.color!
-        let shouldEnable = !self.brush.color.isEqual(UIColor.clear)
-
-        self.resetButtonSelected(self.colorButtonList, button: button)
-        self.updateColorOfButtons(self.widthButtonList, color: button.color!)
-        self.updateColorOfButtons(self.alphaButtonList, color: button.color!, enable: shouldEnable)
-        
-        self.delegate?.didChangeBrushColor?(self.brush.color)
-    }
-
-    @objc private func onClickAlphaPicker(_ button: CircleButton) {
-        self.brush.alpha = button.opacity!
-        self.resetButtonSelected(self.alphaButtonList, button: button)
-        
-        self.delegate?.didChangeBrushAlpha?(self.brush.alpha)
-    }
-
-    @objc private func onClickWidthPicker(_ button: CircleButton) {
-        self.brush.width = button.diameter!
-        self.resetButtonSelected(self.widthButtonList, button: button)
-        
-        self.delegate?.didChangeBrushWidth?(self.brush.width)
-    }
-    
-    
-    // MARK: - Helpers
-    private func resetButtonSelected(
-        _ list: [CircleButton],
-        button: CircleButton
-    ) {
-        for aButton: CircleButton in list {
-            aButton.isSelected = aButton.isEqual(button)
-        }
-    }
-    
-    private func updateColorOfButtons(
-        _ list: [CircleButton],
-        color: UIColor,
-        enable: Bool = true
-    ) {
-        for aButton: CircleButton in list {
-            aButton.update(color)
-            aButton.isEnabled = enable
-        }
-    }
-    
-    private func color(_ tag: NSInteger) -> UIColor {
-        if let color = self.delegate?.colorWithTag?(tag)  {
-            return color
+        for (index, color) in colors.enumerated() {
+            let button = makeButton(index: index)
+            button.backgroundColor = color
+            button.layer.cornerRadius = 22
+            button.accessibilityLabel = ["紅色", "綠色", "藍色"][index]
+            button.addTarget(self, action: #selector(selectColor(_:)), for: .touchUpInside)
+            colorButtons.append(button)
+            row.addArrangedSubview(button)
         }
 
-        return self.colorWithTag(tag)
-    }
-    
-    private func colorWithTag(_ tag: NSInteger) -> UIColor {
-        switch(tag) {
-        case 1:
-            return UIColor.black
-        case 2:
-            return UIColor.darkGray
-        case 3:
-            return UIColor.gray
-        case 4:
-            return UIColor.white
-        case 5:
-            return UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1.0)
-        case 6:
-            return UIColor.orange
-        case 7:
-            return UIColor.green
-        case 8:
-            return UIColor(red: 0.15, green: 0.47, blue: 0.23, alpha: 1.0)
-        case 9:
-            return UIColor(red: 0.2, green: 0.3, blue: 1.0, alpha: 1.0)
-        case 10:
-            return UIColor(red: 0.2, green: 0.8, blue: 1.0, alpha: 1.0)
-        case 11:
-            return UIColor(red: 0.62, green: 0.32, blue: 0.17, alpha: 1.0)
-        case 12:
-            return UIColor.yellow
-        default:
-            return UIColor.black
-        }
-    }
-    
-    private func opacity(_ tag: NSInteger) -> CGFloat {
-        if let opacity = self.delegate?.alphaWithTag?(tag) {
-            if 0 > opacity || opacity > 1 {
-                return CGFloat(tag) / 3.0
-            }
-            return opacity
+        let separator = UIView()
+        separator.backgroundColor = UIColor.gray
+        separator.widthAnchor.constraint(equalToConstant: 1).isActive = true
+        separator.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        row.addArrangedSubview(separator)
+
+        for index in 0..<3 {
+            let button = makeButton(index: index)
+            button.layer.cornerRadius = 8
+            button.accessibilityLabel = ["最細筆觸", "較細筆觸", "中等筆觸"][index]
+            button.addTarget(self, action: #selector(selectWidth(_:)), for: .touchUpInside)
+            let dot = UIView()
+            // Preview dots fit inside a 44-point tap target; drawing widths stay unchanged.
+            let diameter: CGFloat = [10, 16, 22][index]
+            dot.frame = CGRect(x: (44 - diameter) / 2, y: (44 - diameter) / 2,
+                               width: diameter, height: diameter)
+            dot.layer.cornerRadius = diameter / 2
+            dot.isUserInteractionEnabled = false
+            button.addSubview(dot)
+            widthDots.append(dot)
+            widthButtons.append(button)
+            row.addArrangedSubview(button)
         }
 
-        return CGFloat(tag) / 3.0
+        let alphaSeparator = UIView()
+        alphaSeparator.backgroundColor = UIColor.gray
+        alphaSeparator.widthAnchor.constraint(equalToConstant: 1).isActive = true
+        alphaSeparator.heightAnchor.constraint(equalToConstant: 32).isActive = true
+        row.addArrangedSubview(alphaSeparator)
+        for index in opacities.indices {
+            let button = makeButton(index: index)
+            button.layer.cornerRadius = 22
+            button.accessibilityLabel = "不透明度 \(Int((opacities[index] * 100).rounded()))%"
+            button.addTarget(self, action: #selector(selectAlpha(_:)), for: .touchUpInside)
+            alphaButtons.append(button)
+            row.addArrangedSubview(button)
+        }
+
+        let savedIndex = UserDefaults.standard.integer(forKey: brushWidthPreferenceKey)
+        selectedWidth = max(0, min(savedIndex, 2))
+        brush.alpha = 1
+        brush.color = colors[selectedColor]
+        brush.width = brushWidth(selectedWidth)
+        refreshSelection()
     }
 
-    private func brushWidth(_ tag: NSInteger) -> CGFloat {
-        let widthRatios: [CGFloat] = [0.25, 0.40, 0.55, 0.75]
-        let defaultWidth = self.buttonDiameter * widthRatios[max(0, min(tag - 1, widthRatios.count - 1))]
+    private func makeButton(index: Int) -> UIButton {
+        let button = UIButton(type: .custom)
+        button.tag = index
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        button.layer.borderWidth = 2
+        return button
+    }
 
-        if let width = self.delegate?.widthWithTag?(tag) {
-            if 0 > width || width > self.buttonDiameter {
-                return defaultWidth
-            }
+    private func brushWidth(_ index: Int) -> CGFloat {
+        // Preserve the three smallest widths from the original palette.
+        let base = min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) / 10
+        let widthRatios: [CGFloat] = [0.25, 0.40, 0.55]
+        let defaultWidth = base * widthRatios[index]
+        if let width = delegate?.widthWithTag?(index + 1), width >= 0, width <= base {
             return width
         }
-        
         return defaultWidth
+    }
+
+    @objc private func selectColor(_ button: UIButton) {
+        selectedColor = button.tag
+        brush.color = colors[selectedColor]
+        refreshSelection()
+        delegate?.didChangeBrushColor?(brush.color)
+    }
+
+    @objc private func selectWidth(_ button: UIButton) {
+        selectedWidth = button.tag
+        brush.width = brushWidth(selectedWidth)
+        UserDefaults.standard.set(selectedWidth, forKey: brushWidthPreferenceKey)
+        refreshSelection()
+        delegate?.didChangeBrushWidth?(brush.width)
+    }
+
+    @objc private func selectAlpha(_ button: UIButton) {
+        selectedAlpha = button.tag
+        brush.alpha = opacities[selectedAlpha]
+        refreshSelection()
+        delegate?.didChangeBrushAlpha?(brush.alpha)
+    }
+
+    private func refreshSelection() {
+        for (index, button) in colorButtons.enumerated() {
+            button.isSelected = index == selectedColor
+            button.layer.borderColor = (button.isSelected ? UIColor.white : UIColor.clear).cgColor
+        }
+        for (index, button) in alphaButtons.enumerated() {
+            button.isSelected = index == selectedAlpha
+            button.layer.borderColor = (button.isSelected ? UIColor.white : UIColor.clear).cgColor
+            button.backgroundColor = brush.color.withAlphaComponent(opacities[index])
+        }
+        for (index, button) in widthButtons.enumerated() {
+            button.isSelected = index == selectedWidth
+            button.layer.borderColor = (button.isSelected ? UIColor.white : UIColor.clear).cgColor
+            widthDots[index].backgroundColor = brush.color.withAlphaComponent(brush.alpha)
+        }
     }
 }

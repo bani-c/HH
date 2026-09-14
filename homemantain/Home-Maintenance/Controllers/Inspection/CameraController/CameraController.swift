@@ -67,7 +67,7 @@ class CameraController: UIViewController
         paletteView.setup()
         self.view.addSubview(paletteView)
         self.paletteView = paletteView
-        let paletteHeight = paletteView.paletteHeight()
+        let paletteHeight = paletteView.paletteHeight() + self.view.safeAreaInsets.bottom
         paletteView.frame = CGRect(x: 0, y: self.view.frame.height - paletteHeight, width: self.view.frame.width, height: paletteHeight)
     }
 	
@@ -77,7 +77,7 @@ class CameraController: UIViewController
 	}
     
     fileprivate func setupToolBar() {
-        let height = (self.paletteView?.frame)!.height * 0.25
+        let height: CGFloat = 56
         let startY = self.view.frame.height - (paletteView?.frame)!.height - height
         let toolBar = ToolBar()
         toolBar.frame = CGRect(x: 0, y: startY, width: self.view.frame.width, height: height)
@@ -158,6 +158,16 @@ class CameraController: UIViewController
     }
     
     fileprivate func showCamera() {
+        // TEMP TEST BEGIN: 模擬器暫時改開相簿，測試完成後移除此區塊。
+        #if targetEnvironment(simulator)
+        let temporarilyUsePhotoLibrary = true
+        if temporarilyUsePhotoLibrary {
+            self.showPhotoLibrary()
+            return
+        }
+        #endif
+        // TEMP TEST END
+
         let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
         
         switch (status) {
@@ -228,13 +238,29 @@ extension CameraController: CanvasDelegate
     }
     
     func canvas(_ canvas: Canvas, didSaveDrawing drawing: Drawing, mergedImage image: UIImage?) {
-		guard let image = image,
-			let imageData = UIImageJPEGRepresentation(image, 0.5),
-			let compressedImage = UIImage(data: imageData, scale: 1.0) else {
-			return
-		}
+        guard let background = drawing.background,
+            background.size.width > 0, background.size.height > 0,
+            canvas.bounds.width > 0, canvas.bounds.height > 0 else { return }
 
-		self.delegate?.didFinishPhoto?(image: compressedImage)
+        // Export the original photo, mapping canvas annotations back into photo coordinates.
+        // The aspect-fit margins belong to the editor and must not enter the saved JPEG.
+        let fitScale = min(canvas.bounds.width / background.size.width,
+                           canvas.bounds.height / background.size.height)
+        let photoRect = CGRect(
+            x: (canvas.bounds.width - background.size.width * fitScale) / 2,
+            y: (canvas.bounds.height - background.size.height * fitScale) / 2,
+            width: background.size.width * fitScale,
+            height: background.size.height * fitScale)
+        UIGraphicsBeginImageContextWithOptions(background.size, true, background.scale)
+        defer { UIGraphicsEndImageContext() }
+        background.draw(in: CGRect(origin: .zero, size: background.size))
+        drawing.stroke?.draw(in: CGRect(
+            x: -photoRect.minX / fitScale,
+            y: -photoRect.minY / fitScale,
+            width: canvas.bounds.width / fitScale,
+            height: canvas.bounds.height / fitScale))
+        guard let originalSizeImage = UIGraphicsGetImageFromCurrentImageContext() else { return }
+        self.delegate?.didFinishPhoto?(image: originalSizeImage)
 		self.navigationController?.popViewController(animated: true)
     }
 }

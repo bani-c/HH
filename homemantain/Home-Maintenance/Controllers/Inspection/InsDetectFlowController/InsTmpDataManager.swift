@@ -519,11 +519,11 @@ class InsTmpDataManager {
                             }
                             
                             
-                            for photoName in item.picUrls.prefix(2) {
+                            for (photoIndex, photoName) in item.picUrls.prefix(2).enumerated() {
                                 let insertImg = InspCheckFlowUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                                ChkNo <- InsTargetData.sharedInstance().inspNo, CheckFlowType <- String(i),
                                                                                CheckFlowItemId <- flowId, AreaId <- item.areaId,
-                                                                               ChkInspIdx <- item.fkIdx, FileType <- "B", FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                               ChkInspIdx <- item.fkIdx, FileType <- "B", FileName <- photoName, Expression<String?>("FileDesc") <- String(photoIndex + 1), IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -564,11 +564,11 @@ class InsTmpDataManager {
                             
                             try dbUpload.run(insert)
                             try db.run(insert)
-                            for photoName in item.picUrls.prefix(2) {
+                            for (photoIndex, photoName) in item.picUrls.prefix(2).enumerated() {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, ProjInspIdx <- item.fkIdx, InspPlaceId <- item.placeId,
-                                                                      FileType <- "B", FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString, SeqNo <- item.seqNo)
+                                                                      FileType <- "B", FileName <- photoName, Expression<String?>("FileDesc") <- String(photoIndex + 1), IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString, SeqNo <- item.seqNo)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -581,12 +581,12 @@ class InsTmpDataManager {
                             try dbUpload.run(insert)
                             try db.run(insert)
                             
-                            for photoName in item.picUrls.prefix(2) {
+                            for (photoIndex, photoName) in item.picUrls.prefix(2).enumerated() {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, InspPlaceId <- item.placeId,
                                                                       ProjInspIdx <- "", SeqNo <- String(i), FileType <- "B",
-                                                                      FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                      FileName <- photoName, Expression<String?>("FileDesc") <- String(photoIndex + 1), IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }
@@ -618,12 +618,12 @@ class InsTmpDataManager {
                             try dbUpload.run(insert)
                             try db.run(insert)
                             
-                            for photoName in item.picUrls.prefix(2) {
+                            for (photoIndex, photoName) in item.picUrls.prefix(2).enumerated() {
                                 let insertImg = InspUploadFile.insert(COP_NO <- copNo, PROJM_NO <- projectsNo, ELEVEL_2 <- building + room, ELEVEL_2_1 <- building, ELEVEL_2_2 <- room, ELEVEL_1 <- floor,
                                                                       ChkNo <- InsTargetData.sharedInstance().inspNo,
                                                                       AreaId <- item.areaId, InspPlaceId <- item.placeId,
                                                                       ProjInspIdx <- "", SeqNo <- String(i), FileType <- "B",
-                                                                      FileName <- photoName, IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
+                                                                      FileName <- photoName, Expression<String?>("FileDesc") <- String(photoIndex + 1), IsValid <- "Y", CreateUser <- userId, CreateTime <- dateString)
                                 try dbUpload.run(insertImg)
                                 try db.run(insertImg)
                             }

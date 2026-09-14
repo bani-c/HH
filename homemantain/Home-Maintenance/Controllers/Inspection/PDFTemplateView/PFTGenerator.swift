@@ -11,15 +11,9 @@ import SQLite
 class PDFGenerator:NSObject {
     var placeData:[InsPlaceItem] = []
     
-    func createPDF(_ placeData:[InsPlaceItem]) -> URL {
+    func createPDF(_ placeData:[InsPlaceItem], twoSignatureColumns: Bool = false) -> URL {
         
-        if placeData.count == 0 {
-            let placeData = InsPlaceItem()
-            placeData.items = [InsItem()]
-            self.placeData = [placeData]
-        } else {
-            self.placeData = InspectionPrintOrder.sorted(placeData)
-        }
+        self.placeData = InspectionPrintOrder.sorted(placeData)
         let pdfDataGroup = generatePDFData()
         do {
             
@@ -46,6 +40,7 @@ class PDFGenerator:NSObject {
                     pageNumber: pageIndex + 1,
                     totalPages: pdfDataGroup.count
                 )
+                pdfTmp.setSignatureColumns(twoColumns: twoSignatureColumns)
                 pdfTmp.layoutIfNeeded()
                 pdfArray.append(pdfTmp)
                 index += pdfDataSub.count
@@ -103,6 +98,12 @@ class PDFGenerator:NSObject {
                 
             }
         }
+        if pdfDataAll.isEmpty {
+            let emptyData = PDFData()
+            emptyData.title = "無缺失項目"
+            emptyData.isEmptyState = true
+            return [[emptyData]]
+        }
         var pdfDataGroup:[[PDFData]] = []
         var pdfDataSub:[PDFData] = []
         for data in pdfDataAll {
@@ -143,6 +144,7 @@ class PDFGenerator:NSObject {
 }
 
 class PDFData {
+    var isEmptyState = false
     var title:String = ""
     var content:String = ""
 }

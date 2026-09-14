@@ -33,7 +33,17 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     
     @IBOutlet weak var lblPageNumber: UILabel!
     var pdfData:[PDFData] = []
+    private var showsEmptyState: Bool { return pdfData.count == 1 && pdfData[0].isEmptyState }
     var index = 0
+    private var signatureLayout: SignatureColumnsLayout?
+
+    func setSignatureColumns(twoColumns: Bool) {
+        if signatureLayout == nil {
+            signatureLayout = SignatureColumnsLayout(images: [ivSign0, ivSign1, ivSign2])
+        }
+        signatureLayout?.apply(twoColumns: twoColumns)
+    }
+
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.frame = CGRect(x: 0, y: 0, width: 612, height: 772)
@@ -44,6 +54,7 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     }
     
     func setup(_ pdfData:[PDFData], index:Int, pageNumber:Int, totalPages:Int) {
+        initLayout()
         self.pdfData = pdfData
         self.index = index
         lblPageNumber.text = String(format: "第 %d / %d 頁", pageNumber, totalPages)
@@ -55,7 +66,7 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
         if #available(iOS 15.0, *) {
             tableView.sectionHeaderTopPadding = 0
         }
-        tableView.sectionHeaderHeight = 30
+        tableView.sectionHeaderHeight = showsEmptyState ? 0.00001 : 30
         tableView.estimatedSectionHeaderHeight = 0
         tableView.reloadData()
         
@@ -189,7 +200,7 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     }
 
     override func layoutSubviews() {
-        initLayout()
+        super.layoutSubviews()
     }
  
     //MARK: TableView Datasource and Delegate
@@ -208,7 +219,7 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 30
+        return showsEmptyState ? 0.00001 : 30
         
     }
     
@@ -217,6 +228,7 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard !showsEmptyState else { return nil }
         let cell = tableView.dequeueReusableCell(withIdentifier: "PDFHeaderCell") as! PDFHeaderCell
         
         return cell
@@ -224,6 +236,13 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let data = pdfData[indexPath.row]
+        if data.isEmptyState {
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.selectionStyle = .none
+            cell.textLabel?.text = data.title
+            cell.textLabel?.font = UIFont.systemFont(ofSize: 14)
+            return cell
+        }
         let cell = tableView.dequeueReusableCell(withIdentifier: "PDFErrorCell", for: indexPath) as! PDFErrorCell
         cell.selectionStyle = .none
         cell.lblTitle.text = data.title
@@ -239,4 +258,67 @@ class PDFTemplateView:UIView, UITableViewDelegate, UITableViewDataSource {
 	
 	
     
+}
+
+// Shared by the confirmation screen and the PDF footer. Original constraints and
+// signature images are retained so switching back restores the three-column form.
+final class SignatureColumnsLayout {
+    private let container: UIView
+    private let images: [UIImageView]
+    private let titles: [UIView]
+    private let buttons: [UIButton]
+    private let originalConstraints: [NSLayoutConstraint]
+    private var twoColumnConstraints: [NSLayoutConstraint] = []
+
+    init(images: [UIImageView]) {
+        self.images = images
+        let container = images[0].superview!
+        self.container = container
+        titles = container.subviews.filter { view in
+            view.subviews.contains { $0 is UILabel }
+        }.sorted { $0.frame.minX < $1.frame.minX }
+        buttons = container.subviews.compactMap { $0 as? UIButton }.sorted { $0.tag < $1.tag }
+        originalConstraints = container.constraints.filter {
+            ($0.firstItem as? UIView) !== container || $0.secondItem != nil
+        }
+    }
+
+    func apply(twoColumns: Bool) {
+        guard titles.count == 3 else { return }
+        NSLayoutConstraint.deactivate(twoColumnConstraints)
+        twoColumnConstraints.removeAll()
+        titles[2].isHidden = twoColumns
+        images[2].isHidden = twoColumns
+        buttons.first { $0.tag == 2 }?.isHidden = twoColumns
+        if !twoColumns {
+            NSLayoutConstraint.activate(originalConstraints)
+            return
+        }
+        NSLayoutConstraint.deactivate(originalConstraints)
+        for index in 0..<2 {
+            let title = titles[index]
+            let image = images[index]
+            twoColumnConstraints += [
+                title.topAnchor.constraint(equalTo: container.topAnchor),
+                title.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                title.leadingAnchor.constraint(equalTo: index == 0 ? container.leadingAnchor : images[0].trailingAnchor),
+                image.leadingAnchor.constraint(equalTo: title.trailingAnchor),
+                image.topAnchor.constraint(equalTo: container.topAnchor),
+                image.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            ]
+            if let button = buttons.first(where: { $0.tag == index }) {
+                twoColumnConstraints += [
+                    button.leadingAnchor.constraint(equalTo: image.leadingAnchor),
+                    button.trailingAnchor.constraint(equalTo: image.trailingAnchor),
+                    button.topAnchor.constraint(equalTo: image.topAnchor),
+                    button.bottomAnchor.constraint(equalTo: image.bottomAnchor)
+                ]
+            }
+        }
+        twoColumnConstraints += [
+            images[0].trailingAnchor.constraint(equalTo: container.centerXAnchor),
+            images[1].trailingAnchor.constraint(equalTo: container.trailingAnchor)
+        ]
+        NSLayoutConstraint.activate(twoColumnConstraints)
+    }
 }

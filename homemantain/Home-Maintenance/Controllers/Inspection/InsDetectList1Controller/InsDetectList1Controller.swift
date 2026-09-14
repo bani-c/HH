@@ -543,7 +543,7 @@ class InsDetectList1Controller: UIViewController, UITableViewDelegate, UITableVi
                         let FileType = Expression<String?>("FileType")
                         let FileName = Expression<String?>("FileName")
                         let FileUrl = Expression<String?>("FileUrl")
-                        let queryImg = InspUploadFile.select(FileName, FileUrl).filter(AreaId == insAreaItem.idx && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor && ChkNo == targetChkNo && ProjInspIdx == insItem.fkIdx && FileType == "B" && InspPlaceId == insItem.placeId && SeqNo == (insItem.seqNo == "" ? "" : insItem.seqNo)).order(Sorting.asc)
+                        let queryImg = InspUploadFile.select(FileName, FileUrl).filter(AreaId == insAreaItem.idx && ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor && ChkNo == targetChkNo && ProjInspIdx == insItem.fkIdx && FileType == "B" && InspPlaceId == insItem.placeId && SeqNo == (insItem.seqNo == "" ? "" : insItem.seqNo)).order(Expression<String?>("FileDesc").asc)
                         print(insItem.placeId)
                         for dataImgName in try db.prepare(queryImg) {
                             print("name: \(dataImgName[FileName]!)")

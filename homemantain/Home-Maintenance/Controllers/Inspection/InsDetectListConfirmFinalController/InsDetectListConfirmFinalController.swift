@@ -39,6 +39,8 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
     var placeData:[InsPlaceItem] = []
     var placeAllData:[InsPlaceItem] = []
     var isPrint = false
+    private var twoSignatureColumns = false
+    private var signatureLayout: SignatureColumnsLayout?
 	
     var targetCell: InsDetectSignCell?
     @IBOutlet weak var lcTable: NSLayoutConstraint!
@@ -63,6 +65,7 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		initLayaout()
+        signatureLayout = SignatureColumnsLayout(images: [ivSign0, ivSign1, ivSign2])
 	}
 	
 	override func viewDidAppear(_ animated: Bool) {
@@ -265,6 +268,20 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
     
     func initDisplayData() {
         placeData = []
+        defer {
+            if placeData.allSatisfy({ $0.items.isEmpty }) {
+                let label = UILabel()
+                label.text = "無缺失項目"
+                label.font = UIFont.systemFont(ofSize: 22)
+                label.textColor = UIColor.darkGray
+                label.textAlignment = .center
+                label.numberOfLines = 0
+                tableView.backgroundView = label
+            } else {
+                tableView.backgroundView = nil
+            }
+            tableView.reloadData()
+        }
         if catOpName.count == 0 {
             return
         }
@@ -302,7 +319,6 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
                 }
             }
         }
-        tableView.reloadData()
     }
     
     func initDisplayAllData() {
@@ -583,7 +599,7 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
 			return
 		}
 		
-		if ivSign2.image == nil {
+		if !twoSignatureColumns && ivSign2.image == nil {
 			let alertController = UIAlertController(
 				title: "提醒",
 				message: "完成驗收，需有主管簽名",
@@ -738,7 +754,7 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
         tableView.reloadData()
       tableView.setContentOffset(.zero, animated: false)
  */
-        let pdfURL = PDFGenerator().createPDF(placeData)
+        let pdfURL = PDFGenerator().createPDF(placeData, twoSignatureColumns: twoSignatureColumns)
         let printController = UIPrintInteractionController.shared
         let printInfo = UIPrintInfo(dictionary : nil)
         printInfo.duplex = .longEdge
@@ -765,8 +781,15 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
         })*/
         
         
+        let signatureTitle = twoSignatureColumns ? "簽名欄位改成三欄" : "簽名欄位改成兩欄"
+        alert.addAction(UIAlertAction(title: signatureTitle, style: .default) { _ in
+            self.twoSignatureColumns.toggle()
+            self.signatureLayout?.apply(twoColumns: self.twoSignatureColumns)
+            self.view.layoutIfNeeded()
+        })
+
         alert.addAction(UIAlertAction(title: "列印驗屋缺失資料", style: .default) { _ in
-            let pdfURL = PDFGenerator().createPDF(self.placeData)
+            let pdfURL = PDFGenerator().createPDF(self.placeData, twoSignatureColumns: self.twoSignatureColumns)
             let printController = UIPrintInteractionController.shared
             let printInfo = UIPrintInfo(dictionary : nil)
             printInfo.duplex = .longEdge
