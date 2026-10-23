@@ -722,6 +722,10 @@ class InsDetectListRecordController: UIViewController, UITableViewDelegate, UITa
         })
         
         
+        alert.addAction(UIAlertAction(title: "列印驗屋紀錄（四格照片格式）", style: .default) { _ in
+            self.clickPrint(format: .photoGrid)
+        })
+
         alert.addAction(UIAlertAction(title: "離開驗屋紀錄", style: .default) { _ in
             self.navigationController?.popViewController(animated: true)
         })
@@ -733,13 +737,13 @@ class InsDetectListRecordController: UIViewController, UITableViewDelegate, UITa
         present(alert, animated: true)
     }
     
-    func clickPrint() {
+    func clickPrint(format: InspectionPDFFormat = .list) {
        
-        let pdfURL = PDFGenerator().createPDF(placeData)
+        let pdfURL = PDFGenerator().createPDF(placeData, format: format)
         let printController = UIPrintInteractionController.shared
         let printInfo = UIPrintInfo(dictionary : nil)
         printInfo.duplex = .longEdge
-        printInfo.outputType = .grayscale
+        printInfo.outputType = format == .photoGrid ? .general : .grayscale
         printInfo.jobName = "列印驗屋確認單"
         printController.printInfo = printInfo
         printController.printingItem = pdfURL

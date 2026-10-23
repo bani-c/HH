@@ -421,6 +421,8 @@ class InsTmpDataManager {
 			let dbUpload = try Connection(fileURLUpload.absoluteString)
 			let db = try Connection(fileURL.absoluteString)
 			
+            try db.transaction {
+                try dbUpload.transaction {
 			let InspCheckFlowDetail = Table("InspCheckFlowDetail")
 			let COP_NO = Expression<String?>("COP_NO")
 			let PROJM_NO = Expression<String?>("PROJM_NO")
@@ -479,6 +481,16 @@ class InsTmpDataManager {
                         break
                     }
                     let areaData = dicArea[flowId + "_DataArea"]!
+                    // Replace only the loaded flow's photos for this inspection.
+                    // This also removes photos deleted from the current in-memory items.
+                    let oldPhotos = InspCheckFlowUploadFile.filter(
+                        COP_NO == copNo && PROJM_NO == projectsNo &&
+                        ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor &&
+                        ChkNo == InsTargetData.sharedInstance().inspNo &&
+                        CheckFlowItemId == flowId && FileType == "B")
+                    try db.run(oldPhotos.delete())
+                    try dbUpload.run(oldPhotos.delete())
+
                     
                     for insAreaItem in areaData {
                         for item in insAreaItem.items {
@@ -543,6 +555,16 @@ class InsTmpDataManager {
             let SeqNo = Expression<String?>("SeqNo")
 			
             // 第二步尚未開啟時不會建立 Ins_DataArea；第一步畫面仍可安全儲存。
+            if dicArea["Ins_DataArea"] != nil {
+                // The full general-inspection snapshot is available, including removals
+                // and renumbered ad-hoc defects. Keep other rounds and repair photos.
+                let oldPhotos = InspUploadFile.filter(
+                    COP_NO == copNo && PROJM_NO == projectsNo &&
+                    ELEVEL_2_1 == building && ELEVEL_2_2 == room && ELEVEL_1 == floor &&
+                    ChkNo == InsTargetData.sharedInstance().inspNo && FileType == "B")
+                try db.run(oldPhotos.delete())
+                try dbUpload.run(oldPhotos.delete())
+            }
             var areaData = dicArea["Ins_DataArea"] ?? []
             var i = 0
             for insAreaItem in areaData {
@@ -747,6 +769,8 @@ class InsTmpDataManager {
           
             
 			
+                }
+            }
 		} catch let error as NSError {
 			print("Ooops! Something went wrong: \(error)")
 		}

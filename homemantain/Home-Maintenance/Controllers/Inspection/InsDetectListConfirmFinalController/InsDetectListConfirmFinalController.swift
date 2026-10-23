@@ -13,7 +13,7 @@ import NYTPhotoViewer
 import PDFGenerator
 import SQLite
 
-class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate, UITableViewDataSource, EPSignatureDelegate {
+class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate, UITableViewDataSource, EPSignatureDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 	
 	@IBOutlet weak var lblTitle: UILabel!
 	@IBOutlet weak var tableView: UITableView!
@@ -41,6 +41,24 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
     var isPrint = false
     private var twoSignatureColumns = false
     private var signatureLayout: SignatureColumnsLayout?
+    private var selectedFormat: InspectionPDFFormat = .list
+    private let formatControl = UISegmentedControl(items: ["純文字", "含照片"])
+    private let formatHint = UILabel()
+    private var photoLayoutWidth: CGFloat = 0
+    private var photoRecords: [PDFData] = []
+    private var photoItemPaths: [IndexPath] = []
+    private lazy var photoCollection: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 12
+        layout.minimumLineSpacing = 12
+        layout.sectionInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collection.backgroundColor = UIColor(white: 0.96, alpha: 1)
+        collection.dataSource = self
+        collection.delegate = self
+        collection.register(InspectionPhotoRecordCell.self, forCellWithReuseIdentifier: "PhotoRecord")
+        return collection
+    }()
 	
     var targetCell: InsDetectSignCell?
     @IBOutlet weak var lcTable: NSLayoutConstraint!
@@ -53,6 +71,10 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         resetTableViewHeight()
+        if abs(photoCollection.bounds.width - photoLayoutWidth) > 0.5 {
+            photoLayoutWidth = photoCollection.bounds.width
+            photoCollection.collectionViewLayout.invalidateLayout()
+        }
     }
     
     func resetTableViewHeight() {
@@ -66,8 +88,15 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
 		super.viewDidLoad()
 		initLayaout()
         signatureLayout = SignatureColumnsLayout(images: [ivSign0, ivSign1, ivSign2])
+        setupFormatToolbar()
 	}
 	
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+        refreshPhotoRecords()
+    }
+
 	override func viewDidAppear(_ animated: Bool) {
 		super.viewDidAppear(animated)
 	}
@@ -76,6 +105,116 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
 		super.didReceiveMemoryWarning()
 		// Dispose of any resources that can be recreated.
 	}
+
+    // Keep the selected screen layout and every print entry point on the same format.
+    private func setupFormatToolbar() {
+        guard let top = view.constraints.first(where: {
+            ($0.firstItem as? UIView) === scrollview && $0.firstAttribute == .top
+        }), let header = top.secondItem as? UIView else { return }
+        top.isActive = false
+        let toolbar = UIView()
+        toolbar.backgroundColor = UIColor(white: 0.97, alpha: 1)
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(toolbar)
+        formatControl.selectedSegmentIndex = 0
+        formatControl.addTarget(self, action: #selector(formatChanged), for: .valueChanged)
+        formatControl.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.addSubview(formatControl)
+        let printButton = UIButton(type: .system)
+        printButton.setTitle("列印 PDF", for: .normal)
+        printButton.setImage(UIImage(systemName: "printer"), for: .normal)
+        printButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        printButton.tintColor = UIColor(red: 0.52, green: 0.12, blue: 0.14, alpha: 1)
+        printButton.addTarget(self, action: #selector(clickPrint(_:)), for: .touchUpInside)
+        printButton.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.addSubview(printButton)
+        formatHint.font = UIFont.systemFont(ofSize: 12)
+        formatHint.textColor = .darkGray
+        formatHint.translatesAutoresizingMaskIntoConstraints = false
+        toolbar.addSubview(formatHint)
+        photoCollection.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(photoCollection)
+        let preferredControlWidth = formatControl.widthAnchor.constraint(equalToConstant: 340)
+        preferredControlWidth.priority = .defaultHigh
+        preferredControlWidth.isActive = true
+        NSLayoutConstraint.activate([
+            toolbar.topAnchor.constraint(equalTo: header.bottomAnchor),
+            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            toolbar.heightAnchor.constraint(equalToConstant: 84),
+            scrollview.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            formatControl.topAnchor.constraint(equalTo: toolbar.topAnchor, constant: 8),
+            formatControl.leadingAnchor.constraint(equalTo: toolbar.leadingAnchor, constant: 16),
+            formatControl.widthAnchor.constraint(lessThanOrEqualToConstant: 340),
+            formatControl.trailingAnchor.constraint(lessThanOrEqualTo: printButton.leadingAnchor, constant: -16),
+            formatControl.heightAnchor.constraint(equalToConstant: 36),
+            printButton.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -16),
+            printButton.widthAnchor.constraint(equalToConstant: 100),
+            printButton.centerYAnchor.constraint(equalTo: formatControl.centerYAnchor),
+            printButton.heightAnchor.constraint(equalToConstant: 44),
+            formatHint.leadingAnchor.constraint(equalTo: formatControl.leadingAnchor),
+            formatHint.trailingAnchor.constraint(equalTo: toolbar.trailingAnchor, constant: -16),
+            formatHint.topAnchor.constraint(equalTo: formatControl.bottomAnchor, constant: 6),
+            photoCollection.topAnchor.constraint(equalTo: scrollview.topAnchor),
+            photoCollection.bottomAnchor.constraint(equalTo: scrollview.bottomAnchor),
+            photoCollection.leadingAnchor.constraint(equalTo: scrollview.leadingAnchor),
+            photoCollection.trailingAnchor.constraint(equalTo: scrollview.trailingAnchor)
+        ])
+        applySelectedFormat()
+    }
+
+    @objc private func formatChanged() {
+        selectedFormat = formatControl.selectedSegmentIndex == 0 ? .list : .photoGrid
+        refreshPhotoRecords()
+        applySelectedFormat()
+    }
+
+    private func applySelectedFormat() {
+        let photos = selectedFormat == .photoGrid
+        scrollview.isHidden = photos
+        photoCollection.isHidden = !photos
+        formatHint.text = photos ? "四格照片 · 每格 1 張，多張照片分格顯示" : "純文字清單 · 列印不含照片"
+        signatureLayout?.apply(twoColumns: photos || twoSignatureColumns)
+        view.layoutIfNeeded()
+    }
+
+    private func refreshPhotoRecords() {
+        let sortedPlaces = InspectionPrintOrder.sorted(placeData)
+        let generator = PDFGenerator()
+        generator.placeData = sortedPlaces
+        photoRecords = generator.generatePDFData(itemsPerPage: 4, expandPhotos: true).flatMap { $0 }
+        photoItemPaths = sortedPlaces.flatMap { place -> [IndexPath] in
+            guard let section = placeData.firstIndex(where: { $0 === place }) else { return [] }
+            return place.items.indices.flatMap { row in
+                // Every photo card opens the same original defect for editing.
+                Array(repeating: IndexPath(row: row, section: section),
+                      count: max(1, place.items[row].picUrls.count))
+            }
+        }
+        photoCollection.reloadData()
+    }
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return photoRecords.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoRecord", for: indexPath) as! InspectionPhotoRecordCell
+        cell.configure(photoRecords[indexPath.item])
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout,
+                        sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let columns: CGFloat = collectionView.bounds.width >= 600 ? 2 : 1
+        let width = floor((collectionView.bounds.width - 32 - (columns - 1) * 12) / columns)
+        return CGSize(width: width, height: width * 292 / 271.5)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard indexPath.item < photoItemPaths.count else { return }
+        openInspectionItem(at: photoItemPaths[indexPath.item])
+    }
 
 	// MARK: Custom Functions
 	func initLayaout() {
@@ -506,8 +645,12 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
     
     @objc func clickEdit(button: UIButton) {
         
-        let section = button.tag / 10000
-        let row = button.tag % 10000
+        openInspectionItem(at: IndexPath(row: button.tag % 10000, section: button.tag / 10000))
+    }
+
+    private func openInspectionItem(at indexPath: IndexPath) {
+        let section = indexPath.section
+        let row = indexPath.row
         let addMistakeEditController = AddMistakeEditController()
         addMistakeEditController.type = 2
         addMistakeEditController.areaName = placeData[section].areaName
@@ -754,7 +897,11 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
         tableView.reloadData()
       tableView.setContentOffset(.zero, animated: false)
  */
-        let pdfURL = PDFGenerator().createPDF(placeData, twoSignatureColumns: twoSignatureColumns)
+        printInspection()
+    }
+
+    private func printInspection() {
+        let pdfURL = PDFGenerator().createPDF(placeData, twoSignatureColumns: twoSignatureColumns, format: selectedFormat)
         let printController = UIPrintInteractionController.shared
         let printInfo = UIPrintInfo(dictionary : nil)
         printInfo.duplex = .longEdge
@@ -781,23 +928,16 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
         })*/
         
         
-        let signatureTitle = twoSignatureColumns ? "簽名欄位改成三欄" : "簽名欄位改成兩欄"
-        alert.addAction(UIAlertAction(title: signatureTitle, style: .default) { _ in
-            self.twoSignatureColumns.toggle()
-            self.signatureLayout?.apply(twoColumns: self.twoSignatureColumns)
-            self.view.layoutIfNeeded()
-        })
+        if selectedFormat == .list {
+            let signatureTitle = twoSignatureColumns ? "簽名欄位改成三欄" : "簽名欄位改成兩欄"
+            alert.addAction(UIAlertAction(title: signatureTitle, style: .default) { _ in
+                self.twoSignatureColumns.toggle()
+                self.applySelectedFormat()
+            })
+        }
 
-        alert.addAction(UIAlertAction(title: "列印驗屋缺失資料", style: .default) { _ in
-            let pdfURL = PDFGenerator().createPDF(self.placeData, twoSignatureColumns: self.twoSignatureColumns)
-            let printController = UIPrintInteractionController.shared
-            let printInfo = UIPrintInfo(dictionary : nil)
-            printInfo.duplex = .longEdge
-            printInfo.outputType = .general
-            printInfo.jobName = "列印驗屋確認單"
-            printController.printInfo = printInfo
-            printController.printingItem = pdfURL
-            printController.present(animated : true, completionHandler : nil)
+        alert.addAction(UIAlertAction(title: selectedFormat == .photoGrid ? "列印驗屋紀錄（含照片）" : "列印驗屋紀錄（純文字）", style: .default) { _ in
+            self.printInspection()
         })
         
         alert.addAction(UIAlertAction(title: "儲存驗屋紀錄", style: .default) { _ in
@@ -897,3 +1037,38 @@ class InsDetectListConfirmFinalController: UIViewController, UITableViewDelegate
  
  
 
+
+// Use the PDF cell renderer so photo placement and text match the exported form.
+private final class InspectionPhotoRecordCell: UICollectionViewCell {
+    private var record: PDFData?
+    private let renderer = PDFGenerator()
+    private let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .white
+        isOpaque = true
+        contentMode = .redraw
+        isAccessibilityElement = true
+        accessibilityTraits = UIAccessibilityTraitButton
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(_ record: PDFData) {
+        self.record = record
+        accessibilityLabel = record.title + "，" + record.content
+        accessibilityHint = record.isEmptyState ? nil : "點兩下編輯缺失資料與照片"
+        setNeedsDisplay()
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext(), let record = record else { return }
+        context.saveGState()
+        context.scaleBy(x: bounds.width / 271.5, y: bounds.height / 292)
+        renderer.drawPhotoCell(record, in: CGRect(x: 0.5, y: 0.5, width: 270.5, height: 291), directory: directory)
+        context.restoreGState()
+    }
+}
