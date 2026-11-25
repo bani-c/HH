@@ -38,6 +38,13 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
     var dlIndex = 0
     var hud:JGProgressHUD?
     var dlPicTimer = Timer()
+    var didInitLayout = false
+
+    var hasSelection: Bool {
+        return projectIndex >= 0 && projectIndex < buildingsData.count
+            && buildingIndex >= 0 && buildingIndex < buildingsData[projectIndex].count
+            && floorIndex >= 0 && floorIndex < floorsData[projectIndex][buildingIndex].count
+    }
 	
 	// MARK: Life Circle
 	override func viewDidLoad() {
@@ -47,7 +54,10 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 	
 	override func viewDidAppear(_ animated: Bool) {
 		super.viewDidAppear(animated)
-		initLayaout()
+		if !didInitLayout {
+			didInitLayout = true
+			initLayaout()
+		}
 	}
 
 	override func didReceiveMemoryWarning() {
@@ -136,10 +146,15 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 		btnSync.clipsToBounds = true
 		btnSync.layer.cornerRadius = 5.0
 		
+		if projectsData.isEmpty {
+			let alert = UIAlertController(title: "提醒", message: "無專案資料", preferredStyle: .alert)
+			alert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
+			self.present(alert, animated: true, completion: nil)
+		}
 	}
 	
 	func resetBuildingAndFloor() {
-		var buildings = buildingsData[projectIndex]
+		let buildings = buildingsData.indices.contains(projectIndex) ? buildingsData[projectIndex] : []
 		if buildings.count != 0 {
 			buildingIndex = 0
 			tfBuilding.text = buildings[buildingIndex]
@@ -147,9 +162,11 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 			buildingIndex = -1
 			tfBuilding.text = ""
 		}
-		
-		var floorsBuildings = floorsData[projectIndex]
-		var floors = floorsBuildings[buildingIndex]
+		resetFloor()
+	}
+	
+	func resetFloor() {
+		let floors = buildingIndex >= 0 ? floorsData[projectIndex][buildingIndex] : []
 		if floors.count != 0 {
 			floorIndex = 0
 			tfFloor.text = floors[floorIndex]
@@ -157,6 +174,7 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 			floorIndex = -1
 			tfFloor.text = ""
 		}
+		btnSync.isEnabled = hasSelection
 	}
 	
 	func initData() {
@@ -175,9 +193,9 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 				.order(project_sorting.asc)
 			
 			for project in try db.prepare(query) {
-				print("name: \(project[project_name]!), pwd: \(project[project_no]!)")
-				projectsData.append(project[project_name]!)
-				projectsNoData.append(project[project_no]!)
+				guard let name = project[project_name], let no = project[project_no] else { continue }
+				projectsData.append(name)
+				projectsNoData.append(no)
 			}
 			
 			let homeSalems = Table("HomeSalem")
@@ -190,8 +208,8 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 				var buildings = [] as [String]
 				var floorsBuildings = [] as [[String]]
 				for homeSalem in try db.prepare(query) {
-					print("name: \(homeSalem[ELEVEL_2_1]!)")
-					buildings.append(homeSalem[ELEVEL_2_1]!)
+					guard let building = homeSalem[ELEVEL_2_1] else { continue }
+					buildings.append(building)
 					
 					let item_e1 = Expression<String?>("ELEVEL_1")
 					query = homeSalems.select(item_e1)
@@ -201,8 +219,8 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 					var floors = [] as [String]
 					floors.append("all")
 					for homeSalem in try db.prepare(query) {
-						print("name: \(homeSalem[item_e1]!)")
-						floors.append(homeSalem[item_e1]!)
+						guard let floor = homeSalem[item_e1] else { continue }
+						floors.append(floor)
 					}
 					floorsBuildings.append(floors)
 				}
@@ -259,12 +277,9 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 		if pickerView.tag == 0 {
 			return projectsData.count
 		} else if pickerView.tag == 1 {
-			let buildings = buildingsData[projectIndex]
-			return buildings.count
+			return buildingsData.indices.contains(projectIndex) ? buildingsData[projectIndex].count : 0
 		} else if pickerView.tag == 2 {
-			let floorsBuildings = floorsData[projectIndex]
-			let floors = floorsBuildings[buildingIndex]
-			return floors.count
+			return buildingIndex >= 0 ? floorsData[projectIndex][buildingIndex].count : 0
 		} else if pickerView.tag == 3 {
 			return rooms.count
 		} else {
@@ -298,6 +313,7 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 			buildingIndex = row
 			let buildings = buildingsData[projectIndex]
 			tfBuilding.text = buildings[buildingIndex]
+			resetFloor()
 		} else if pickerView.tag == 2 {
 			floorIndex = row
 			let floorsBuildings = floorsData[projectIndex]
@@ -312,15 +328,12 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 	}
 	
 	@IBAction func clickSync(_ sender: Any) {
+		guard hasSelection else { return }
        let alert = UIAlertController(title: "提醒", message: "清除所有資料", preferredStyle: UIAlertControllerStyle.alert)
        alert.addAction(UIAlertAction(title: "取消", style: UIAlertActionStyle.destructive, handler: { action in
            
        }))
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.destructive, handler: { action in
-            let buildings = self.buildingsData[self.projectIndex]
-             let fileName = String.init(format: SystemConstants.DBFileNameSub, self.projectsNoData[self.projectIndex], buildings[self.buildingIndex])
-             //loadPic(dbName: fileName)
-             
              self.loadDB()
         }))
         self.present(alert, animated: true, completion: nil)
@@ -523,6 +536,7 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
     }
     
 	func loadDB() {
+		guard hasSelection else { return }
 		let hud = JGProgressHUD(style: .dark)
 		hud.vibrancyEnabled = true
 		//hud.indicatorView = JGProgressHUDPieIndicatorView()
