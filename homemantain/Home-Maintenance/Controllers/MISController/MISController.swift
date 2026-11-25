@@ -292,6 +292,7 @@ class MISController: UIViewController{
         
         completionClosure = {(status) in
             print("is Download completed : \(status)")
+            self.dlPicTimer.invalidate()
             self.dlIndex += 1
             DispatchQueue.main.async {
                 self.hud.progress = (Float)(self.dlIndex) / (Float)(self.dlPicArr.count)
@@ -346,6 +347,7 @@ class MISController: UIViewController{
     }
     
     @objc func timerStop() {
+        guard dlPicArr.indices.contains(dlIndex) else { return }
         do {
             let fileManager = FileManager.default
             let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)

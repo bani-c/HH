@@ -35,10 +35,10 @@ public class VeloxDownloadManager : NSObject,URLSessionDelegate,URLSessionDownlo
         
         super.init()
         let configuration = URLSessionConfiguration.default
-        self.session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+        self.session = URLSession(configuration: configuration, delegate: self, delegateQueue: OperationQueue.main)
         
         let backgroundConfiguration  = URLSessionConfiguration.background(withIdentifier: "com.sharmanitin.VeloxDownloader")
-        self.backgroundSession = URLSession(configuration: backgroundConfiguration, delegate: self, delegateQueue: nil)
+        self.backgroundSession = URLSession(configuration: backgroundConfiguration, delegate: self, delegateQueue: OperationQueue.main)
         self.currentDownloads = Array<String>()
         VeloxCacheManagement.cleanTempDirectory()
         UNUserNotificationCenter.current().delegate = self
@@ -105,7 +105,7 @@ public class VeloxDownloadManager : NSObject,URLSessionDelegate,URLSessionDownlo
             
             let downloadInstance = VeloxDownloadInstance(withDownloadTask: downloadTask, remainingTime: nil, progess: nil, status: nil, name: fileName, friendlyName: friendlyName!, path: directoryName!, date: Date())
 
-            VeloxDownloadManager.downloadInstanceDictionary![url.lastPathComponent] = downloadInstance
+            VeloxDownloadManager.downloadInstanceDictionary![url.absoluteString] = downloadInstance
             if(delegate != nil)
             {
             delegate?.downloadItemAdded(downloadInstance: downloadInstance)
@@ -186,7 +186,7 @@ public class VeloxDownloadManager : NSObject,URLSessionDelegate,URLSessionDownlo
             
             let downloadInstance = VeloxDownloadInstance(withDownloadTask: downloadTask, remainingTime: remainigtTimeClosure, progess: progressClosure, status: completionClosure, name: fileName, friendlyName: friendlyName!, path: directoryName!, date: Date())
             
-            VeloxDownloadManager.downloadInstanceDictionary![url.lastPathComponent] = downloadInstance
+            VeloxDownloadManager.downloadInstanceDictionary![url.absoluteString] = downloadInstance
             
             
             downloadTask.resume()
@@ -208,79 +208,60 @@ public class VeloxDownloadManager : NSObject,URLSessionDelegate,URLSessionDownlo
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         
         
-        //print("data written \(totalBytesWritten)")
-        let fileIdentifier  = downloadTask.originalRequest!.url!.lastPathComponent
-        let dowloadInstace = VeloxDownloadManager.downloadInstanceDictionary![fileIdentifier]
+        let fileIdentifier  = downloadTask.originalRequest!.url!.absoluteString
+        guard let dowloadInstace = VeloxDownloadManager.downloadInstanceDictionary![fileIdentifier] else { return }
         let  progress = CGFloat.init(totalBytesWritten) / CGFloat.init(totalBytesExpectedToWrite)
         
         //print("progress is   \(progress)")
 
         DispatchQueue.main.async {
-            dowloadInstace!.currentProgressClosure!(CGFloat(progress),dowloadInstace!)
+            dowloadInstace.currentProgressClosure?(CGFloat(progress),dowloadInstace)
         }
         
-        let remainingTime = self.remainingTimeForDownload(downloadInstace: dowloadInstace!, totalBytesTransferred: totalBytesWritten, totalBytesExpectedToWrite: totalBytesExpectedToWrite)
+        let remainingTime = self.remainingTimeForDownload(downloadInstace: dowloadInstace, totalBytesTransferred: totalBytesWritten, totalBytesExpectedToWrite: totalBytesExpectedToWrite)
         
         
         DispatchQueue.main.async {
-            dowloadInstace!.remainingTimeClosure! (remainingTime)
+            dowloadInstace.remainingTimeClosure?(remainingTime)
         }
     }
     
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        
-        
-        
-        let fileIdentifier  = downloadTask.originalRequest!.url!.lastPathComponent
-        let dowloadInstace = VeloxDownloadManager.downloadInstanceDictionary![fileIdentifier]
-        var destinationLocation : URL  = VeloxCacheManagement.cachesDirectoryURlPath()
-        
-        if(dowloadInstace!.filePath.isEmpty){
-            destinationLocation = destinationLocation.appendingPathComponent(fileIdentifier)
+        let url = downloadTask.originalRequest!.url!
+        guard let dowloadInstace = VeloxDownloadManager.downloadInstanceDictionary!.removeValue(forKey: url.absoluteString) else { return }
+
+        let statusCode = (downloadTask.response as? HTTPURLResponse)?.statusCode ?? 0
+        if statusCode >= 400 {
+            return
+        }
+
+        let destinationLocation : URL
+        if(dowloadInstace.filePath.isEmpty){
+            destinationLocation = VeloxCacheManagement.cachesDirectoryURlPath().appendingPathComponent(url.lastPathComponent)
         }
         else{
-            
-            destinationLocation = URL(string: dowloadInstace!.filePath)!
+            destinationLocation = URL(string: dowloadInstace.filePath)!
         }
-        
-        var success = true
 
-        let response  = downloadTask.response! as! HTTPURLResponse
-        let statusCode = response.statusCode
-      
-            if (statusCode >= 400) {
-                success = false
+        delegate?.downloadItemRemoved(downloadInstance: dowloadInstace)
+        do
+        {
+            if FileManager.default.fileExists(atPath: destinationLocation.path) {
+                try FileManager.default.removeItem(at: destinationLocation)
             }
-        
-        
-        if (success) {
-            
-           
-            if(delegate != nil)
-            {
-                delegate?.downloadItemRemoved(downloadInstance: dowloadInstace!)
-            }
-            do
-            {
-          if(VeloxCacheManagement.fileExistWithName(name: dowloadInstace!.filename))
-                
-                {
-                    try  FileManager.default.removeItem(at: destinationLocation)
-
-                }
-                try  FileManager.default.moveItem(at: location, to: destinationLocation)
-                dowloadInstace?.downloadStatusClosure!(true)
-            }
-            catch let error as NSError
-            {
-                print("error occured \(error.localizedDescription)")
-            }
-            VeloxDownloadManager.downloadInstanceDictionary!.removeValue(forKey: dowloadInstace!.filename)
-            dowloadInstace!.downloadStatusClosure!(true)
+            try FileManager.default.moveItem(at: location, to: destinationLocation)
         }
-        
-        
-       //do a local notification
+        catch let error as NSError
+        {
+            print("error occured \(error.localizedDescription)")
+        }
+        dowloadInstace.downloadStatusClosure?(true)
+    }
+
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if error != nil, let url = task.originalRequest?.url {
+            VeloxDownloadManager.downloadInstanceDictionary?.removeValue(forKey: url.absoluteString)
+        }
     }
     
     
