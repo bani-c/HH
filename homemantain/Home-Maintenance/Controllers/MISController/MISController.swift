@@ -292,6 +292,7 @@ class MISController: UIViewController{
         
         completionClosure = {(status) in
             print("is Download completed : \(status)")
+            self.dlPicTimer.invalidate()
             self.dlIndex += 1
             DispatchQueue.main.async {
                 self.hud.progress = (Float)(self.dlIndex) / (Float)(self.dlPicArr.count)
@@ -346,6 +347,7 @@ class MISController: UIViewController{
     }
     
     @objc func timerStop() {
+        guard dlPicArr.indices.contains(dlIndex) else { return }
         do {
             let fileManager = FileManager.default
             let documentDirectory = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create:false)
@@ -371,9 +373,7 @@ class MISController: UIViewController{
     @objc func timerStopBasic() {
        
         self.hud.dismiss(animated: false)
-        if self.dlPicArr.isEmpty {
-            return
-        }
+        guard dlPicArr.indices.contains(dlIndex) else { return }
         let alert = UIAlertController(title: "提醒", message: "無法下載資料\n" + self.dlPicArr[self.dlIndex].fileUrl, preferredStyle: UIAlertControllerStyle.alert)
         
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.destructive, handler: { action in

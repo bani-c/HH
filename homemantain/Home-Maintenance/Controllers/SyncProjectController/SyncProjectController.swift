@@ -501,6 +501,7 @@ class SyncProjectController: UIViewController, UIPickerViewDelegate, UIPickerVie
 	
     
     @objc func timerStop() {
+        guard dlPicArr.indices.contains(dlIndex) else { return }
        
         
         do {

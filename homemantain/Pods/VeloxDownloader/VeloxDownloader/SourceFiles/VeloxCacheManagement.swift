@@ -80,7 +80,7 @@ public class VeloxCacheManagement
         if(VeloxDownloadManager.downloadInstanceDictionary != nil)
         {
             
-            let downloadInstance = VeloxDownloadManager.downloadInstanceDictionary![url.lastPathComponent]
+            let downloadInstance = VeloxDownloadManager.downloadInstanceDictionary![url.absoluteString]
             if(downloadInstance == nil)
             {
                 flag = false
@@ -103,7 +103,7 @@ public class VeloxCacheManagement
         
         if(VeloxDownloadManager.downloadInstanceDictionary != nil)
         {
-            let dowloadInstance = VeloxDownloadManager.downloadInstanceDictionary![url.lastPathComponent]
+            let dowloadInstance = VeloxDownloadManager.downloadInstanceDictionary![url.absoluteString]
             if(dowloadInstance != nil)
             {
                 if(progress != nil)
