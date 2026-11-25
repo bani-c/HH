@@ -373,9 +373,7 @@ class MISController: UIViewController{
     @objc func timerStopBasic() {
        
         self.hud.dismiss(animated: false)
-        if self.dlPicArr.isEmpty {
-            return
-        }
+        guard dlPicArr.indices.contains(dlIndex) else { return }
         let alert = UIAlertController(title: "提醒", message: "無法下載資料\n" + self.dlPicArr[self.dlIndex].fileUrl, preferredStyle: UIAlertControllerStyle.alert)
         
         alert.addAction(UIAlertAction(title: "確定", style: UIAlertActionStyle.destructive, handler: { action in

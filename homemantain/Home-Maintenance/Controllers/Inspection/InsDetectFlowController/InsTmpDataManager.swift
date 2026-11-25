@@ -1370,6 +1370,7 @@ class InsTmpDataManager {
         
         completionClosure = {(status) in
             print("is Download completed : \(status)")
+            self.dlPicTimer.invalidate()
             self.dlIndex += 1
             DispatchQueue.main.async {
                 self.hud?.progress = (Float)(self.dlIndex) / (Float)(self.dlPicArr.count)
